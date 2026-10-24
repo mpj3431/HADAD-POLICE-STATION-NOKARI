@@ -1129,7 +1129,8 @@ function renderRoster(){
 
 // ----- એડિટર -----
 const FIELDS={duties:[['duty','નોકરી'],['shift','સમય'],['staff','કર્મચારી'],['remark','રીમાર્ક્સ']],keys:[['label','નોકરી / ચાર્જ'],['staff','કર્મચારી']],van:[['label','શીફ્ટ'],['staff','કર્મચારી']]};
-const COLS={duties:'3fr 2fr 4fr 2fr 30px',keys:'4fr 7fr 30px',van:'3fr 8fr 30px'};
+const COLS={duties:'3fr 2fr 4fr 30px 2fr 30px',keys:'4fr 7fr 30px 30px',van:'3fr 8fr 30px 30px'};
+const PKBTN='<button type="button" onclick="pickNames(this)" title="સ્ટાફ લિસ્ટમાંથી નામ ઉમેરો" class="text-indigo-700"><i class="fa-solid fa-user-plus"></i></button>';
 function openEditor(mode){
   const k=findKey(curDate),prev=keysDesc().find(x=>x<=curDate)||keysDesc()[0],src=rosters[mode==='edit'?k:prev];
   if(mode==='edit'&&!k)return;
@@ -1141,13 +1142,13 @@ function openEditor(mode){
 }
 function drawEditor(){
   const e=document.getElementById('roster-editor'),I='class="w-full p-1.5 text-xs border border-gray-300 rounded"';
-  const grp=(g,title)=>`<h4 class="font-bold text-indigo-900 text-sm mt-4 mb-1">${title}</h4>`+draft[g].map((row,i)=>`<div style="display:grid;grid-template-columns:${COLS[g]};gap:4px;margin-bottom:4px">${FIELDS[g].map(([f,ph])=>`<input data-g="${g}" data-i="${i}" data-f="${f}" value="${esc(row[f])}" placeholder="${ph}" ${f==='staff'?'list="staff-dl"':''} ${I}>`).join('')}<button onclick="rowOp('${g}',${i},-1)" class="text-red-500"><i class="fa-solid fa-xmark"></i></button></div>`).join('')+`<button onclick="rowOp('${g}',0,1)" class="text-xs text-indigo-700 font-semibold"><i class="fa-solid fa-plus"></i> લાઇન ઉમેરો</button>`;
+  const grp=(g,title)=>`<h4 class="font-bold text-indigo-900 text-sm mt-4 mb-1">${title}</h4>`+draft[g].map((row,i)=>`<div style="display:grid;grid-template-columns:${COLS[g]};gap:4px;margin-bottom:4px">${FIELDS[g].map(([f,ph])=>`<input data-g="${g}" data-i="${i}" data-f="${f}" value="${esc(row[f])}" placeholder="${ph}" ${f==='staff'?'list="staff-dl"':''} ${I}>${f==='staff'?PKBTN:''}`).join('')}<button onclick="rowOp('${g}',${i},-1)" class="text-red-500"><i class="fa-solid fa-xmark"></i></button></div>`).join('')+`<button onclick="rowOp('${g}',0,1)" class="text-xs text-indigo-700 font-semibold"><i class="fa-solid fa-plus"></i> લાઇન ઉમેરો</button>`;
   const sc=(s,ph)=>`<input data-s="${s}" value="${esc(draft[s])}" placeholder="${ph}" ${I}>`;
   e.classList.remove('hidden');
   e.innerHTML=`<div class="flex justify-between items-center mb-2"><h3 class="font-bold text-indigo-900">${editKey?'પત્રકમાં ફેરફાર':'નવું નોકરી પત્રક'}</h3><div class="space-x-2"><button onclick="saveRoster()" class="px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-semibold"><i class="fa-solid fa-floppy-disk mr-1"></i> સેવ કરો</button><button onclick="closeEditor()" class="px-3 py-1.5 bg-gray-500 text-white rounded-lg text-xs font-semibold">રદ</button></div></div>
   <div class="grid grid-cols-2 gap-2 text-xs"><label>તારીખથી<input type="date" data-s="from" value="${draft.from}" ${I}></label><label>તારીખ સુધી<input type="date" data-s="to" value="${draft.to}" ${I}></label></div><div class="mt-2">${sc('officer','અધિકારીનું નામ (દા.ત. શ્રી I/C PI ... સાહેબ)')}</div>
   ${grp('duties','૧. સ્ટેશન / વાયરલેસ / કમ્પ્યુટર / ડ્રાઇવર ફરજ')}${grp('keys','૨. ટેબલ શાખા / કોર્ટ / ઓ.પી. ચાર્જ')}<h4 class="font-bold text-amber-900 text-sm mt-4 mb-1">૧૧૨ વાન</h4>${sc('vanTitle','વાનનું શીર્ષક')}<div class="mt-1">${grp('van','')}</div>
-  <h4 class="font-bold text-indigo-900 text-sm mt-4 mb-1">૬. નાઇટ રાઉન્ડ</h4><div class="space-y-1">${sc('nIn','નાઇટ પેટ્રોલીંગ ઇન્ચાર્જ')}${sc('nPts','મુખ્ય પોઇન્ટ્સ')}${sc('nNote','ખાસ નોંધ')}</div>`;
+  <h4 class="font-bold text-indigo-900 text-sm mt-4 mb-1">૬. નાઇટ રાઉન્ડ</h4><div class="space-y-1"><div style="display:grid;grid-template-columns:1fr 30px;gap:4px">${sc('nIn','નાઇટ પેટ્રોલીંગ ઇન્ચાર્જ')}${PKBTN}</div>${sc('nPts','મુખ્ય પોઇન્ટ્સ')}${sc('nNote','ખાસ નોંધ')}</div>`;
   e.scrollIntoView({behavior:'smooth',block:'start'});
 }
 function syncDraft(){const e=document.getElementById('roster-editor');e.querySelectorAll('[data-g]').forEach(x=>{draft[x.dataset.g][x.dataset.i][x.dataset.f]=x.value});e.querySelectorAll('[data-s]').forEach(x=>{draft[x.dataset.s]=x.value})}
@@ -1237,6 +1238,16 @@ function delNight(id){if(confirm('આ નાઇટ રાઉન્ડ કાઢ�
 function renderNight(){const b=document.getElementById('night-body');if(!b)return;const td='border border-gray-300 p-1.5';
   b.innerHTML=[...nightRounds].sort((x,y)=>y.date.localeCompare(x.date)).map(n=>`<tr><td class="${td} font-semibold">${fd(n.date)}<br><span class="text-gray-500">${wdOf(n.date)}</span></td><td class="${td}">${esc(n.from)} થી ${esc(n.to)}</td><td class="${td} font-bold">${esc(n.incharge)}</td><td class="${td}">${esc(n.with)||'-'}</td><td class="${td}">${esc(n.note)||'-'}</td><td class="${td} no-print admin-only"><button onclick="delNight(${n.id})" class="text-red-600"><i class="fa-solid fa-trash"></i></button></td></tr>`).join('')||`<tr><td colspan="6" class="${td} text-center text-gray-500 p-4">હજી કોઈ નાઇટ રાઉન્ડ નોંધાયો નથી.</td></tr>`;
   const d=document.getElementById('nt-date');if(d&&!d.value){const n=new Date();d.value=n.getFullYear()+'-'+pad(n.getMonth()+1)+'-'+pad(n.getDate())}}
+// ----- નોકરી પત્રકમાં લિસ્ટમાંથી નામ ઉમેરો -----
+let pkTarget=null;
+function pickNames(btn){pkTarget=btn.previousElementSibling;const m=document.getElementById('staff-modal');
+  m.innerHTML=`<div class="bg-white rounded-xl p-4 w-full max-w-md text-xs" style="max-height:90vh;display:flex;flex-direction:column"><h3 class="font-bold text-base text-indigo-900 mb-2">સ્ટાફ પસંદ કરો (એક કે વધુ)</h3><input id="pk-q" oninput="pkFilter()" placeholder="નામ / બ.નં. શોધો..." class="w-full p-2 border border-gray-300 rounded mb-2"><div id="pk-list" class="overflow-y-auto border border-gray-200 rounded p-2 space-y-1" style="flex:1">${sortStaffByRank(staffMaster).map(s=>`<label class="pk-row flex items-center gap-2" data-q="${esc((sLabel(s)+' '+s.regularDuty).toLowerCase())}"><input type="checkbox" value="${esc(sLabel(s))}"> ${esc(sLabel(s))}${s.status==='LEAVE'?' <b class="text-red-600">(રજા)</b>':s.status==='DEPUTATION'?' <b class="text-purple-600">(પ્રતિ નિયુક્તિ)</b>':''}</label>`).join('')}</div>
+  <div class="flex justify-end gap-2 mt-3"><button onclick="closeStaffModal()" class="px-3 py-2 bg-gray-500 text-white rounded-lg font-semibold">રદ</button><button onclick="applyPick()" class="px-3 py-2 bg-indigo-700 text-white rounded-lg font-semibold">ઉમેરો</button></div></div>`;
+  m.classList.remove('hidden');m.classList.add('flex')}
+function pkFilter(){const q=G(document.getElementById('pk-q').value.trim().toLowerCase());document.querySelectorAll('#pk-list .pk-row').forEach(r=>r.style.display=r.dataset.q.includes(q)?'':'none')}
+function applyPick(){const n=[...document.querySelectorAll('#pk-list input:checked')].map(x=>x.value);
+  if(n.length&&pkTarget){const v=pkTarget.value.trim();pkTarget.value=(v?v.replace(/[,\s]+$/,'')+', ':'')+n.join(', ')}
+  closeStaffModal()}
 // ----- દરેક મેનુનો અલગ રંગ -----
 const TAB_HUE={"night":322,"roster": 215, "perm": 190, "bandobast": 28, "deputation": 275, "available": 145, "leaves": 350},LV={50:96,100:92,200:84,300:72,400:60,500:50,600:43,700:36,800:29,900:22};
 function setHue(h){for(const k in LV)document.documentElement.style.setProperty('--c-'+k,`${h} 70% ${LV[k]}%`)}
