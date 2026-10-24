@@ -1,0 +1,1188 @@
+<!DOCTYPE html>
+<html lang="gu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>હડાદ પોલીસ સ્ટેશન - નોકરી પત્રક અને બંદોબસ્ત વ્યવસ્થાપન</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- jsPDF Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- html2canvas Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script>tailwind.config={theme:{extend:{colors:{indigo:Object.fromEntries([50,100,200,300,400,500,600,700,800,900].map(n=>[n,`hsl(var(--c-${n}) / <alpha-value>)`]))}}}}</script>
+    <style>
+        :root{--c-50:215 70% 96%;--c-100:215 70% 92%;--c-200:215 70% 84%;--c-300:215 70% 72%;--c-400:215 70% 60%;--c-500:215 70% 50%;--c-600:215 70% 43%;--c-700:215 70% 36%;--c-800:215 70% 29%;--c-900:215 70% 22%;}
+        .nav-btn{border-left:6px solid hsl(var(--h,215) 70% 48%);display:flex;align-items:center;gap:.5rem;width:100%;white-space:nowrap;padding:.6rem .8rem;border-radius:.6rem;font-size:.85rem;font-weight:500;color:hsl(var(--c-800));background:#fff;border:1px solid #e5e7eb;text-align:left}
+        .nav-btn:hover{background:hsl(var(--h,215) 70% 93%)}
+        .nav-btn.active{background:hsl(var(--h,215) 70% 36%);color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+        body:not(.is-admin) .admin-only,body:not(.is-admin) [onclick^="deleteStaff"],body:not(.is-admin) [onclick^="deleteBandobast"],body:not(.is-admin) [onclick^="makeAvailable"],body:not(.is-admin) [onclick^="openEditor"],body:not(.is-admin) [onclick^="deleteRoster"],body:not(.is-admin) label.nav-btn{display:none!important}
+        .swatch{width:20px;height:20px;border-radius:50%;border:2px solid #fff;cursor:pointer}
+        @import url('https://fonts.googleapis.com/css2?family=Hind+Vadodara:wght@300;400;500;600;700&display=swap');
+        body {
+            font-family: 'Hind Vadodara', sans-serif;
+            background-color: #f3f4f6;
+        }
+        @media print {
+            .no-print { display: none !important; }
+            .print-only { display: block !important; }
+            body { background: white; font-size: 11pt; }
+            .page-break { page-break-before: always; }
+        }
+        .duty-card { transition: all 0.2s ease; }
+        .duty-card:hover { transform: translateY(-2px); }
+    </style>
+</head>
+<body class="text-gray-800 pb-12">
+
+    <!-- Top Navigation Header -->
+    <header class="bg-indigo-900 text-white shadow-lg sticky top-0 z-50 no-print">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <i class="fa-solid font-bold fa-shield-halved text-yellow-400 text-2xl"></i>
+                <div>
+                    <h1 class="text-xl font-bold leading-tight">હડાદ પોલીસ સ્ટેશન</h1>
+                    <p class="text-xs text-indigo-200">રોજિંદી નોકરી પત્રક & બંદોબસ્ત વ્યવસ્થાપન પ્રણાલી</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2 no-print" id="theme-box"><span class="text-xs text-indigo-200 mr-1"><i class="fa-solid fa-palette"></i> થીમ</span></div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="max-w-7xl mx-auto px-4 pt-6 md:flex md:gap-6"><aside class="no-print flex md:flex-col gap-2 overflow-x-auto md:overflow-visible pb-2 mb-4 md:mb-0 md:w-56 shrink-0 md:sticky md:top-20 md:self-start"><button onclick="switchTab('roster')" id="tab-roster" class="nav-btn" style="--h:215"><i class="fa-solid fa-clipboard-list mr-1"></i> ફુલ નોકરી પત્રક</button><button onclick="switchTab('perm')" id="tab-perm" class="nav-btn" style="--h:190"><i class="fa-solid fa-table-list mr-1"></i> સ્થાયી નોકરી પત્રક / સ્ટાફ</button><button onclick="switchTab('bandobast')" id="tab-bandobast" class="nav-btn" style="--h:28"><i class="fa-solid fa-people-group mr-1"></i> બંદોબસ્ત ફાળવણી</button><button onclick="switchTab('deputation')" id="tab-deputation" class="nav-btn" style="--h:275"><i class="fa-solid fa-building-user mr-1"></i> પ્રતિ નિયુક્તિ</button><button onclick="switchTab('available')" id="tab-available" class="nav-btn" style="--h:145"><i class="fa-solid fa-user-check mr-1"></i> બચતમાં સ્ટાફ</button><button onclick="switchTab('leaves')" id="tab-leaves" class="nav-btn" style="--h:350"><i class="fa-solid fa-user-clock mr-1"></i> રજા / સીક / ગેરહાજર</button>
+<div class="hidden md:block mt-3 pt-3 border-t border-gray-300 text-xs space-y-2"><button onclick="exportData()" class="nav-btn"><i class="fa-solid fa-download"></i> data.json ડાઉનલોડ</button><label class="nav-btn cursor-pointer"><i class="fa-solid fa-upload"></i> બેકઅપ ખોલો<input type="file" accept=".json" class="hidden" onchange="importData(this)"></label></div></aside><main class="flex-1 min-w-0">
+
+        <!-- Top Overview Stats -->
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6 no-print">
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex items-center justify-between">
+                <div>
+                    <p class="text-xs text-gray-500 font-semibold">કુલ મંજૂર સ્ટાફ</p>
+                    <h3 class="text-2xl font-bold text-gray-800" id="stat-total">0</h3>
+                </div>
+                <div class="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold">
+                    <i class="fa-solid fa-users"></i>
+                </div>
+            </div>
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex items-center justify-between">
+                <div>
+                    <p class="text-xs text-gray-500 font-semibold">ફરજ / ડ્યુટીમાં</p>
+                    <h3 class="text-2xl font-bold text-indigo-600" id="stat-duty">0</h3>
+                </div>
+                <div class="w-10 h-10 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold">
+                    <i class="fa-solid fa-user-shield"></i>
+                </div>
+            </div>
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex items-center justify-between">
+                <div>
+                    <p class="text-xs text-gray-500 font-semibold">પ્રતિ નિયુક્તિ</p>
+                    <h3 class="text-2xl font-bold text-purple-600" id="stat-deputation">0</h3>
+                </div>
+                <div class="w-10 h-10 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center font-bold">
+                    <i class="fa-solid fa-building-user"></i>
+                </div>
+            </div>
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex items-center justify-between">
+                <div>
+                    <p class="text-xs text-gray-500 font-semibold">રજા/સીક/ગેરહાજર</p>
+                    <h3 class="text-2xl font-bold text-red-600" id="stat-leave">0</h3>
+                </div>
+                <div class="w-10 h-10 rounded-full bg-red-100 text-red-600 flex items-center justify-center font-bold">
+                    <i class="fa-solid fa-notes-medical"></i>
+                </div>
+            </div>
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex items-center justify-between col-span-2 md:col-span-1">
+                <div>
+                    <p class="text-xs text-gray-500 font-semibold">બચતમાં હાજર સ્ટાફ</p>
+                    <h3 class="text-2xl font-bold text-green-600" id="stat-available">0</h3>
+                </div>
+                <div class="w-10 h-10 rounded-full bg-green-100 text-green-600 flex items-center justify-center font-bold">
+                    <i class="fa-solid fa-user-check"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 1: FULL DAILY DUTY ROSTER VIEW -->
+        <section id="sec-roster" class="tab-section">
+            <div class="bg-white rounded-xl shadow-md p-6 border border-gray-200 mb-6">
+                <!-- Header Actions -->
+                <div class="flex flex-wrap justify-between items-center pb-4 mb-4 border-b border-gray-200 gap-3 no-print">
+                    <div>
+                        <h2 class="text-lg font-bold text-gray-800">રોજિંદુ ફુલ નોકરી પત્રક</h2>
+                        <p id="roster-sub" class="text-xs text-gray-500"></p>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button onclick="exportToPDF('roster-print-area', 'Hadad_Police_Nokari_Patrak')" class="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-semibold shadow flex items-center">
+                            <i class="fa-solid fa-file-pdf mr-1"></i> PDF ડાઉનલોડ
+                        </button>
+                        <button onclick="exportToImage('roster-print-area', 'Hadad_Police_Nokari_Patrak')" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow flex items-center">
+                            <i class="fa-solid fa-file-image mr-1"></i> ફોટો (PNG) સેવ કરો
+                        </button>
+                        <button onclick="window.print()" class="px-3 py-1.5 bg-gray-700 hover:bg-gray-800 text-white rounded-lg text-xs font-semibold shadow flex items-center">
+                            <i class="fa-solid fa-print mr-1"></i> પ્રિન્ટ
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Printable Document Area -->
+                <div class="no-print mb-4 p-3 rounded-xl bg-indigo-50 border border-indigo-200">
+<div class="flex flex-wrap items-center gap-2">
+<button onclick="shiftDay(-1)" class="px-3 py-1.5 bg-white border border-indigo-200 rounded-lg text-sm"><i class="fa-solid fa-chevron-left"></i></button>
+<input type="date" id="roster-date" onchange="curDate=this.value;renderRoster()" class="p-1.5 text-sm border border-indigo-200 rounded-lg bg-white">
+<button onclick="shiftDay(1)" class="px-3 py-1.5 bg-white border border-indigo-200 rounded-lg text-sm"><i class="fa-solid fa-chevron-right"></i></button>
+<span id="roster-wd" class="text-sm font-bold text-indigo-900 mr-auto"></span>
+<button onclick="openEditor('blank')" class="px-3 py-1.5 bg-indigo-700 hover:bg-indigo-800 text-white rounded-lg text-xs font-semibold"><i class="fa-solid fa-plus mr-1"></i> નવું પત્રક</button>
+<button onclick="openEditor('copy')" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold"><i class="fa-solid fa-copy mr-1"></i> પાછલાની નકલ</button>
+<button id="btn-edit" onclick="openEditor('edit')" class="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-xs font-semibold"><i class="fa-solid fa-pen mr-1"></i> ફેરફાર</button>
+<button id="btn-del" onclick="deleteRoster()" class="px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white rounded-lg text-xs font-semibold"><i class="fa-solid fa-trash"></i></button></div>
+<div id="roster-chips" class="flex flex-wrap gap-1 mt-2"></div></div>
+<datalist id="staff-dl"></datalist>
+<div id="roster-editor" class="hidden no-print mb-4 p-4 rounded-xl border-2 border-indigo-300 bg-white"></div>
+<div id="roster-empty" class="hidden p-10 text-center text-gray-500 border border-dashed border-gray-300 rounded-xl">આ તારીખનું નોકરી પત્રક હજી બનાવ્યું નથી. ઉપરથી <b>નવું પત્રક</b> પર ક્લિક કરો.</div>
+<div id="roster-print-area" class="bg-white p-4 border border-gray-300 rounded shadow-sm text-sm">
+<div class="text-center mb-4 pb-2 border-b-2 border-gray-800"><h2 class="text-xl font-bold text-gray-900 uppercase">હડાદ પોલીસ સ્ટેશન</h2><h3 id="rv-title" class="text-base font-bold text-gray-800"></h3><p id="rv-officer" class="text-xs text-gray-600 font-semibold"></p></div>
+<div class="mb-6"><h4 class="font-bold text-indigo-900 text-sm mb-2 pb-1 border-b border-indigo-200">૧. સ્ટેશન & વાયરલેસ & કમ્પ્યુટર & ડ્રાઇવર ફરજ</h4><div class="overflow-x-auto"><table class="w-full text-xs text-left border-collapse border border-gray-300"><thead class="bg-gray-100 font-bold"><tr><th class="border border-gray-300 p-2">નોકરી વિગત</th><th class="border border-gray-300 p-2">શિફ્ટ / સમય</th><th class="border border-gray-300 p-2">ફાળવેલ કર્મચારી</th><th class="border border-gray-300 p-2">સંપર્ક / રીમાર્ક્સ</th></tr></thead><tbody id="rv-duties"></tbody></table></div></div>
+<div class="mb-6"><h4 class="font-bold text-indigo-900 text-sm mb-2 pb-1 border-b border-indigo-200">૨. ટેબલ શાખા & કોર્ટ / તપાસ / ઓ.પી. ચાર્જ</h4><div id="rv-keys" class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs"></div></div>
+<div class="mb-6 p-3 bg-amber-50 border border-amber-300 rounded"><h4 id="rv-vantitle" class="font-bold text-amber-900 text-xs mb-1"></h4><div id="rv-van" class="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs"></div></div>
+<!-- Active Bandobast Section -->
+                    <div class="mb-6">
+                        <h4 class="font-bold text-indigo-900 text-sm mb-2 pb-1 border-b border-indigo-200">૩. હાલમાં કાર્યરત બંદોબસ્ત</h4>
+                        <div id="roster-active-bandobast-list" class="space-y-2 text-xs">
+                            <!-- Dynamic Content -->
+                        </div>
+                    </div>
+
+                    <!-- Leaves & Deputation Summary in Roster -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        <div>
+                            <h4 class="font-bold text-red-800 text-xs mb-2 pb-1 border-b border-red-200">૪. ગેરહાજર / સીક / રજા પત્રક</h4>
+                            <ul id="roster-leave-list" class="text-xs space-y-1 list-disc pl-4 text-red-900">
+                                <!-- Dynamic Content -->
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-purple-800 text-xs mb-2 pb-1 border-b border-purple-200">૫. પ્રતિ નિયુક્તિ (Deputation)</h4>
+                            <ul id="roster-deputation-list" class="text-xs space-y-1 list-disc pl-4 text-purple-900">
+                                <!-- Dynamic Content -->
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="mb-6 p-3 border border-gray-300 rounded bg-gray-50 text-xs"><h4 class="font-bold text-gray-900 mb-1">૬. નાઇટ રાઉન્ડ & નાઇટ પોઇન્ટ્સ (કલાક ૨૩/૦૦ થી ૦૫/૦૦)</h4><p class="mb-1"><strong>નાઇટ પેટ્રોલીંગ ઇન્ચાર્જ:</strong> <span id="rv-nin"></span></p><p class="text-gray-600"><strong>મુખ્ય પોઇન્ટ્સ:</strong> <span id="rv-npts"></span></p><p class="text-red-700 font-semibold mt-1"><span id="rv-nnote"></span></p></div>
+<!-- Signatures -->
+                    <div class="mt-8 pt-4 border-t border-gray-400 flex justify-between items-center text-xs font-bold text-gray-800">
+                        <div>પોસ્ટે ઓની સહી</div>
+                        <div>I/C પો.ઇન્સ સાહેબની સહી</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+                <!-- TAB: PERMANENT DUTY LIST / STAFF MANAGEMENT -->
+        <section id="sec-perm" class="tab-section hidden">
+            <div class="bg-white rounded-xl shadow-md p-6 border border-gray-200 mb-6">
+                <div class="flex flex-wrap justify-between items-center pb-4 mb-4 border-b border-gray-200 gap-3 no-print">
+                    <div><h2 class="text-lg font-bold text-indigo-900">સ્થાયી નોકરી પત્રક / સ્ટાફ યાદી</h2><p class="text-xs text-gray-500">તા.૦૧/૦૯/૨૦૨૫ થી અમલમાં</p></div>
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <button onclick="openStaffModal(0)" class="admin-only px-3 py-1.5 bg-indigo-700 hover:bg-indigo-800 text-white rounded-lg text-xs font-semibold"><i class="fa-solid fa-user-plus mr-1"></i> નવો સ્ટાફ ઉમેરો</button>
+                        <button onclick="exportToPDF('perm-print-area','Hadad_Sthayi_Nokari_Patrak')" class="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-semibold"><i class="fa-solid fa-file-pdf mr-1"></i> PDF</button>
+                        <button onclick="exportToImage('perm-print-area','Hadad_Sthayi_Nokari_Patrak')" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold"><i class="fa-solid fa-file-image mr-1"></i> PNG</button>
+                        <button onclick="window.print()" class="px-3 py-1.5 bg-gray-700 text-white rounded-lg text-xs font-semibold"><i class="fa-solid fa-print mr-1"></i> પ્રિન્ટ</button>
+                    </div>
+                </div>
+                <div id="perm-print-area" class="bg-white p-3 border border-gray-300 rounded text-xs">
+                    <h3 class="text-center font-bold text-sm bg-gray-100 border border-gray-300 p-2">હડાદ પોલીસ સ્ટેશનમાં ફરજ બજાવતા પોલીસ કર્મચારીઓનું નોકરી પત્રક તા.૦૧/૦૯/૨૦૨૫ થી અમલમાં</h3>
+                    <div class="overflow-x-auto"><table class="w-full border-collapse border border-gray-300 text-left"><thead class="bg-gray-100 font-bold"><tr>
+                        <th class="border border-gray-300 p-1.5">અ.નં</th><th class="border border-gray-300 p-1.5">નોકરી</th><th class="border border-gray-300 p-1.5">નં.</th><th class="border border-gray-300 p-1.5">હોદ્દો</th><th class="border border-gray-300 p-1.5">બ.નં</th><th class="border border-gray-300 p-1.5">નામ</th><th class="border border-gray-300 p-1.5">મો.નં</th><th class="border border-gray-300 p-1.5">રીમાર્ક્સ</th><th class="border border-gray-300 p-1.5 no-print admin-only">ફેરફાર</th></tr></thead>
+                    <tbody id="perm-body"></tbody></table></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 2: BANDOBAST ASSIGNMENT MODULE -->
+        <section id="sec-bandobast" class="tab-section hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Left: Form to Assign New Bandobast -->
+                <div class="lg:col-span-1 bg-white rounded-xl shadow-md p-5 border border-gray-200 no-print">
+                    <h3 class="text-base font-bold text-gray-800 mb-4 pb-2 border-b border-gray-200">
+                        <i class="fa-solid fa-plus-circle text-indigo-600 mr-1"></i> નવો બંદોબસ્ત ફાળવો
+                    </h3>
+                    
+                    <form id="bandobast-form" onsubmit="handleCreateBandobast(event)" class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 mb-1">બંદોબસ્તનું નામ / સ્થળ *</label>
+                            <input type="text" id="bb-title" placeholder="દા.ત. માછલા ગામે ચૂંટણી બંદોબસ્ત" required class="w-full p-2 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-indigo-500">
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-700 mb-1">શરૂઆત તારીખ *</label>
+                                <input type="date" id="bb-start" required class="w-full p-2 text-xs border border-gray-300 rounded">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-700 mb-1">પુરૂ તારીખ *</label>
+                                <input type="date" id="bb-end" required class="w-full p-2 text-xs border border-gray-300 rounded">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 mb-1">વિગત / કામગીરી *</label>
+                            <textarea id="bb-details" rows="2" placeholder="બંદોબસ્તની કામગીરીની ટૂંકી વિગત..." required class="w-full p-2 text-xs border border-gray-300 rounded"></textarea>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 mb-1">સ્ટાફ સિલેક્ટ કરો (હાજર સ્ટાફમાંથી - હોદ્દા ક્રમ મુજબ) *</label>
+                            <div id="staff-selection-list" class="max-h-56 overflow-y-auto p-2 border border-gray-200 rounded bg-gray-50 space-y-1">
+                                <!-- Dynamic rank-sorted checkboxes -->
+                            </div>
+                        </div>
+
+                        <button type="submit" class="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded shadow transition">
+                            બંદોબસ્ત ઓર્ડર જનરેટ કરો
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Right: Active Bandobast Orders List -->
+                <div class="lg:col-span-2 space-y-4">
+                    <div class="bg-white rounded-xl shadow-md p-5 border border-gray-200">
+                        <h3 class="text-base font-bold text-gray-800 mb-4 pb-2 border-b border-gray-200 flex justify-between items-center">
+                            <span><i class="fa-solid fa-list-check text-indigo-600 mr-1"></i> ચાલુ બંદોબસ્ત ફાળવણી ફાઇલો</span>
+                            <span class="text-xs bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded-full" id="bandobast-count-badge">0</span>
+                        </h3>
+
+                        <div id="bandobast-cards-container" class="space-y-4">
+                            <!-- Dynamic Cards generated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 3: DEPUTATION (પ્રતિ નિયુક્તિ) SECTION -->
+        <section id="sec-deputation" class="tab-section hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                <!-- Add Deputation Form -->
+                <div class="lg:col-span-1 bg-white rounded-xl shadow-md p-5 border border-purple-200 no-print">
+                    <h3 class="text-base font-bold text-purple-900 mb-4 pb-2 border-b border-purple-100 flex items-center">
+                        <i class="fa-solid fa-user-plus text-purple-600 mr-2"></i> નવી પ્રતિ નિયુક્તિ ઉમેરો
+                    </h3>
+                    <form onsubmit="handleAddDeputation(event)" class="space-y-3 text-xs">
+                        <div>
+                            <label class="block font-bold text-gray-700 mb-1">હોદ્દો (Rank) *</label>
+                            <select id="dep-role" required class="w-full p-2 border border-gray-300 rounded">
+                                <option value="PI">PI / I/C PI</option>
+                                <option value="PSI">PSI</option>
+                                <option value="ASI">ASI / UASI</option>
+                                <option value="WUASI">WUASI</option>
+                                <option value="UHC">UHC / HC</option>
+                                <option value="WUHC">WUHC</option>
+                                <option value="AHC">AHC</option>
+                                <option value="UPC">UPC / PC</option>
+                                <option value="WUPC">WUPC</option>
+                                <option value="APC">APC</option>
+                                <option value="AWPC">AWPC</option>
+                                <option value="D.APC">D.APC (ડ્રાઇવર)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block font-bold text-gray-700 mb-1">બકલ નંબર (Buckle No) *</label>
+                            <input type="text" id="dep-buck" required placeholder="દા.ત. ૧૦૨૫" class="w-full p-2 border border-gray-300 rounded">
+                        </div>
+                        <div>
+                            <label class="block font-bold text-gray-700 mb-1">કર્મચારીનું નામ *</label>
+                            <input type="text" id="dep-name" required placeholder="દા.ત. રમેશસિંહ દાંલતસિંહ" class="w-full p-2 border border-gray-300 rounded">
+                        </div>
+                        <div>
+                            <label class="block font-bold text-gray-700 mb-1">પ્રતિ નિયુક્તિ સ્થળ / વિગત *</label>
+                            <input type="text" id="dep-details" required placeholder="દા.ત. દાંતા SDPO કચેરી / સઘન સુરક્ષા" class="w-full p-2 border border-gray-300 rounded">
+                        </div>
+                        <div>
+                            <label class="block font-bold text-gray-700 mb-1">મોબાઇલ નંબર *</label>
+                            <input type="text" id="dep-phone" required placeholder="૧૦ આંકડાનો મો.નં." class="w-full p-2 border border-gray-300 rounded">
+                        </div>
+                        <button type="submit" class="w-full py-2 bg-purple-700 hover:bg-purple-800 text-white font-bold rounded shadow">
+                            પ્રતિ નિયુક્તિમાં ઉમેરો
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Deputation List & Actions -->
+                <div class="lg:col-span-2 bg-white rounded-xl shadow-md p-6 border border-gray-200">
+                    <div class="flex flex-wrap justify-between items-center pb-4 mb-4 border-b border-gray-200 gap-3 no-print">
+                        <div>
+                            <h2 class="text-lg font-bold text-purple-900">પ્રતિ નિયુક્તિ (Deputation) સ્ટાફ યાદી</h2>
+                            <p class="text-xs text-gray-500">અન્ય કચેરીઓ અથવા હેડક્વાર્ટર ખાતે ફાળવવામાં આવેલ પોલીસ કર્મચારીઓ</p>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button onclick="exportToPDF('deputation-print-area', 'Deputation_Staff_Hadad')" class="px-3 py-1.5 bg-red-600 text-white rounded-lg text-xs font-semibold shadow">
+                                <i class="fa-solid fa-file-pdf mr-1"></i> PDF
+                            </button>
+                            <button onclick="exportToImage('deputation-print-area', 'Deputation_Staff_Hadad')" class="px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-semibold shadow">
+                                <i class="fa-solid fa-file-image mr-1"></i> ફોટો (PNG)
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="deputation-print-area" class="bg-white p-4 border border-purple-200 rounded">
+                        <div class="text-center mb-4 pb-2 border-b border-purple-300">
+                            <h3 class="text-lg font-bold text-purple-900">હડાદ પોલીસ સ્ટેશન - પ્રતિ નિયુક્તિ પત્રક</h3>
+                            <p class="text-xs text-gray-600">મુખ્ય પોલીસ સ્ટેશન સિવાય અન્ય કચેરીમાં રોકાયેલ સ્ટાફ</p>
+                        </div>
+
+                        <table class="w-full text-xs text-left border-collapse border border-gray-300">
+                            <thead class="bg-purple-100 font-bold text-purple-900">
+                                <tr>
+                                    <th class="border border-gray-300 p-2">અનં</th>
+                                    <th class="border border-gray-300 p-2">હોદ્દો & બ.નં</th>
+                                    <th class="border border-gray-300 p-2">કર્મચારીનું નામ</th>
+                                    <th class="border border-gray-300 p-2">પ્રતિ નિયુક્તિ સ્થળ / વિગત</th>
+                                    <th class="border border-gray-300 p-2">મોબાઇલ નંબર</th>
+                                    <th class="border border-gray-300 p-2 no-print">એક્શન</th>
+                                </tr>
+                            </thead>
+                            <tbody id="deputation-table-body">
+                                <!-- Dynamic Rank Sorted Content -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 4: AVAILABLE STAFF (બચતમાં સ્ટાફ) SECTION -->
+        <section id="sec-available" class="tab-section hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                <!-- Add New Available Staff Form -->
+                <div class="lg:col-span-1 bg-white rounded-xl shadow-md p-5 border border-green-200 no-print">
+                    <h3 class="text-base font-bold text-green-900 mb-4 pb-2 border-b border-green-100 flex items-center">
+                        <i class="fa-solid fa-user-plus text-green-600 mr-2"></i> નવો સ્ટાફ ઉમેરો (Add Staff)
+                    </h3>
+                    <form onsubmit="handleAddStaff(event)" class="space-y-3 text-xs">
+                        <div>
+                            <label class="block font-bold text-gray-700 mb-1">હોદ્દો (Rank) *</label>
+                            <select id="add-role" required class="w-full p-2 border border-gray-300 rounded">
+                                <option value="PI">PI / I/C PI</option>
+                                <option value="PSI">PSI</option>
+                                <option value="ASI">ASI / UASI</option>
+                                <option value="WUASI">WUASI</option>
+                                <option value="UHC">UHC / HC</option>
+                                <option value="WUHC">WUHC</option>
+                                <option value="AHC">AHC</option>
+                                <option value="UPC">UPC / PC</option>
+                                <option value="WUPC">WUPC</option>
+                                <option value="APC">APC</option>
+                                <option value="AWPC">AWPC</option>
+                                <option value="D.APC">D.APC (ડ્રાઇવર)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block font-bold text-gray-700 mb-1">બકલ નંબર (Buckle No) *</label>
+                            <input type="text" id="add-buck" required placeholder="દા.ત. ૧૫૪૮" class="w-full p-2 border border-gray-300 rounded">
+                        </div>
+                        <div>
+                            <label class="block font-bold text-gray-700 mb-1">કર્મચારીનું નામ *</label>
+                            <input type="text" id="add-name" required placeholder="દા.ત. વિનોદકુમાર સોમાભાઇ" class="w-full p-2 border border-gray-300 rounded">
+                        </div>
+                        <div>
+                            <label class="block font-bold text-gray-700 mb-1">નિયમિત હોદ્દો / શાખા</label>
+                            <input type="text" id="add-duty" placeholder="દા.ત. જનરલ / બીટ રાઇટર" class="w-full p-2 border border-gray-300 rounded">
+                        </div>
+                        <div>
+                            <label class="block font-bold text-gray-700 mb-1">મોબાઇલ નંબર *</label>
+                            <input type="text" id="add-phone" required placeholder="૧૦ આંકડાનો મો.નં." class="w-full p-2 border border-gray-300 rounded">
+                        </div>
+                        <button type="submit" class="w-full py-2 bg-green-700 hover:bg-green-800 text-white font-bold rounded shadow">
+                            માસ્ટર રોસ્ટરમાં ઉમેરો
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Available List & Actions -->
+                <div class="lg:col-span-2 bg-white rounded-xl shadow-md p-6 border border-gray-200">
+                    <div class="flex flex-wrap justify-between items-center pb-4 mb-4 border-b border-gray-200 gap-3 no-print">
+                        <div>
+                            <h2 class="text-lg font-bold text-green-800">બચતમાં રહેલ સ્ટાફ (Available Staff)</h2>
+                            <p class="text-xs text-gray-500">હાલમાં કોઈ ખાસ બંદોબસ્ત કે રજા પર ન હોય તેવો તૈનાતી માટે ઉપલબ્ધ સ્ટાફ (હોદ્દા વાઇઝ ક્રમમાં)</p>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button onclick="exportToPDF('available-print-area', 'Available_Staff_Hadad')" class="px-3 py-1.5 bg-red-600 text-white rounded-lg text-xs font-semibold shadow">
+                                <i class="fa-solid fa-file-pdf mr-1"></i> PDF
+                            </button>
+                            <button onclick="exportToImage('available-print-area', 'Available_Staff_Hadad')" class="px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-semibold shadow">
+                                <i class="fa-solid fa-file-image mr-1"></i> ફોટો (PNG)
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="available-print-area" class="bg-white p-4 border border-green-200 rounded">
+                        <div class="text-center mb-4 pb-2 border-b border-green-300">
+                            <h3 class="text-lg font-bold text-green-900">હડાદ પોલીસ સ્ટેશન - બચતમાં રહેલ સ્ટાફની યાદી</h3>
+                            <p class="text-xs text-gray-600">ઇમરજન્સી બંદોબસ્ત / નોકરી માટે ઉપલબ્ધ સ્ટાફ</p>
+                        </div>
+
+                        <table class="w-full text-xs text-left border-collapse border border-gray-300">
+                            <thead class="bg-green-100 font-bold text-green-900">
+                                <tr>
+                                    <th class="border border-gray-300 p-2">અનં</th>
+                                    <th class="border border-gray-300 p-2">હોદ્દો & બ.નં</th>
+                                    <th class="border border-gray-300 p-2">નામ</th>
+                                    <th class="border border-gray-300 p-2">નિયમિત હોદ્દો / રીમાર્ક્સ</th>
+                                    <th class="border border-gray-300 p-2">મોબાઇલ નંબર</th>
+                                    <th class="border border-gray-300 p-2 no-print">એક્શન</th>
+                                </tr>
+                            </thead>
+                            <tbody id="available-table-body">
+                                <!-- Dynamic Rank Sorted Content -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 5: LEAVES & SICK TRACKER -->
+        <section id="sec-leaves" class="tab-section hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                <!-- Leave Assignment Form -->
+                <div class="lg:col-span-1 bg-white rounded-xl shadow-md p-5 border border-red-200 no-print">
+                    <h3 class="text-base font-bold text-red-900 mb-4 pb-2 border-b border-red-100 flex items-center">
+                        <i class="fa-solid fa-user-clock text-red-600 mr-2"></i> સ્ટાફને રજા / સીક / ગેરહાજર મૂકો
+                    </h3>
+                    <form onsubmit="handleMarkLeave(event)" class="space-y-3 text-xs">
+                        <div>
+                            <label class="block font-bold text-gray-700 mb-1">કર્મચારી પસંદ કરો (હોદ્દા ક્રમ મુજબ) *</label>
+                            <select id="leave-staff-id" required class="w-full p-2 border border-gray-300 rounded">
+                                <!-- Dynamic Rank Sorted options -->
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block font-bold text-gray-700 mb-1">રજાનો પ્રકાર *</label>
+                            <select id="leave-type" required class="w-full p-2 border border-gray-300 rounded font-semibold text-gray-800">
+                                <option value="હક્ક રજા">હક્ક રજા</option>
+                                <option value="ક.રજા (કેઝ્યુઅલ લીવ)">ક.રજા (કેઝ્યુઅલ લીવ)</option>
+                                <option value="સીકમાં (Sick Leave)">સીકમાં (Sick Leave)</option>
+                                <option value="ગેરહાજર (Absent)">ગેરહાજર (Absent)</option>
+                                <option value="અન્ય (Other)">અન્ય (Other)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block font-bold text-gray-700 mb-1">કઈ તારીખથી / ક્યાં સુધી વિગત *</label>
+                            <input type="text" id="leave-details" required placeholder="દા.ત. તા.૧૦/૧૦ થી તા.૨૧/૧૦ સુધી / કારણ" class="w-full p-2 border border-gray-300 rounded">
+                        </div>
+                        <button type="submit" class="w-full py-2 bg-red-700 hover:bg-red-800 text-white font-bold rounded shadow">
+                            રજા / ગેરહાજીરી નોંધો
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Leaves Table & Actions -->
+                <div class="lg:col-span-2 bg-white rounded-xl shadow-md p-6 border border-gray-200">
+                    <div class="flex flex-wrap justify-between items-center pb-4 mb-4 border-b border-gray-200 gap-3 no-print">
+                        <div>
+                            <h2 class="text-lg font-bold text-red-800">રજા / સીક / ગેરહાજર સ્ટાફ પત્રક</h2>
+                            <p class="text-xs text-gray-500">હક્ક રજા, કે.રજા, સીક અથવા ગેરહાજર રહેલ કર્મચારીઓની યાદી (હોદ્દા ક્રમ મુજબ)</p>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button onclick="exportToPDF('leaves-print-area', 'Leave_Sick_Report_Hadad')" class="px-3 py-1.5 bg-red-600 text-white rounded-lg text-xs font-semibold shadow">
+                                <i class="fa-solid fa-file-pdf mr-1"></i> PDF
+                            </button>
+                            <button onclick="exportToImage('leaves-print-area', 'Leave_Sick_Report_Hadad')" class="px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-semibold shadow">
+                                <i class="fa-solid fa-file-image mr-1"></i> ફોટો (PNG)
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="leaves-print-area" class="bg-white p-4 border border-red-200 rounded">
+                        <div class="text-center mb-4 pb-2 border-b border-red-300">
+                            <h3 class="text-lg font-bold text-red-900">હડાદ પોલીસ સ્ટેશન - રજા / સીક / ગેરહાજર પત્રક</h3>
+                        </div>
+
+                        <table class="w-full text-xs text-left border-collapse border border-gray-300">
+                            <thead class="bg-red-100 font-bold text-red-900">
+                                <tr>
+                                    <th class="border border-gray-300 p-2">અનં</th>
+                                    <th class="border border-gray-300 p-2">હોદ્દો & બ.નં</th>
+                                    <th class="border border-gray-300 p-2">નામ</th>
+                                    <th class="border border-gray-300 p-2">પ્રકાર</th>
+                                    <th class="border border-gray-300 p-2">ક્યાં સુધી / વિગત</th>
+                                    <th class="border border-gray-300 p-2">મોબાઇલ નંબર</th>
+                                    <th class="border border-gray-300 p-2 no-print">એક્શન</th>
+                                </tr>
+                            </thead>
+                            <tbody id="leaves-table-body">
+                                <!-- Dynamic Rank Sorted Content -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main></div>
+
+    <!-- JavaScript Implementation -->
+    <script>
+        // RANK WEIGHT MAP FOR STRICT PSI -> PC SORTING ORDER
+        const RANK_ORDER = {
+            "I/C PI": 1, "PI": 1,
+            "PSI": 2, "WPSI": 2,
+            "ASI": 3, "UASI": 3, "WUASI": 3,
+            "UHC": 4, "HC": 4, "WUHC": 4, "AHC": 4,
+            "UPC": 5, "PC": 5, "WUPC": 5, "APC": 5, "AWPC": 5, "ULR": 5,
+            "D.APC": 6, "DRIVER": 6
+        };
+
+        // Helper function to sort staff strictly by Police Hierarchy
+        function getRankWeight(role) {
+            return RANK_ORDER[role] || 99;
+        }
+
+        function sortStaffByRank(staffList) {
+            return [...staffList].sort((a, b) => {
+                const wA = getRankWeight(a.role);
+                const wB = getRankWeight(b.role);
+                if (wA !== wB) return wA - wB;
+                // If same rank, sort by Buckle number
+                return (parseInt(a.buckNo) || 0) - (parseInt(b.buckNo) || 0);
+            });
+        }
+
+        // MASTER STAFF DATA (Pre-loaded from provided Hadad Police Station documents)
+        let staffMaster = [
+            { id: 1, role: "I/C PI", buckNo: "-", grp: "થાણાઅધિકારી", name: "શ્રી જે.જે.સરવૈયા", phone: "9978755074", regularDuty: "થાણાઅધિકારી (SHO)", status: "DUTY" },
+            { id: 2, role: "UASI", buckNo: "1038", grp: "પી.એસ.ઓ./ વાયરલેસ", name: "નિયાઝખાન બબલમિયા", phone: "7588583482", regularDuty: "PSO / વાયરલેસ", status: "DUTY" },
+            { id: 3, role: "UHC", buckNo: "1356", grp: "પી.એસ.ઓ./ વાયરલેસ", name: "બાબુભાઇ મંછાભાઇ", phone: "9624478768", regularDuty: "PSO / વાયરલેસ", status: "DUTY" },
+            { id: 4, role: "UPC", buckNo: "1548", grp: "કોમ્પ્યુટર ઓપરેટર ઇ-ગુજકોપ", name: "જયેશકુમાર ચંન્દ્રકાંન્ત", phone: "7622852023", regularDuty: "કમ્પ્યુટર ઓપરેટર", status: "DUTY" },
+            { id: 5, role: "WUHC", buckNo: "2318", grp: "કોમ્પ્યુટર ઓપરેટર ઇ-ગુજકોપ", name: "લીલાબેન ભોળાભાઇ", phone: "9638080427", regularDuty: "કમ્પ્યુટર ઓપરેટર / રાઇટર હેડ", status: "DUTY" },
+            { id: 6, role: "UASI", buckNo: "1176", grp: "એકાઉન્ટ રા.હેડ", name: "રમેશભાઇ સુરાભાઇ", phone: "8712221147", regularDuty: "એકાઉન્ટ રા.હેડ", status: "LEAVE", leaveDetails: "સીકમાં (Sick Leave) - તા.૦૨/૧૦/૨૦૨૬ થી" },
+            { id: 7, role: "WUASI", buckNo: "1035", grp: "ક્રાઇમ", name: "સુમિત્રાબેન કમજીભાઇ", phone: "7466931246", regularDuty: "ક્રાઇમ શાખા", status: "DUTY" },
+            { id: 8, role: "UASI", buckNo: "1632", grp: "એલ.આઇ.બી", name: "અશોકભાઇ મહોતભાઇ", phone: "9737620108", regularDuty: "એલ.આઇ.બી / હાજરી માસ્તર", status: "LEAVE", leaveDetails: "હક્ક રજા - તા.૧૬/૧૦/૨૦૨૬ થી તા.૨૧/૧૦/૨૦૨૬ સુધી" },
+            { id: 9, role: "WUASI", buckNo: "1370", grp: "બારનીશી", name: "મંજુલાબેન નાથાભાઇ", phone: "9408344035", regularDuty: "બારનીશી / શી-ટીમ", status: "DUTY" },
+            { id: 10, role: "WUPC", buckNo: "1138", grp: "ટપાલ ડ્યુટી", name: "પ્રિયંકાબેન સુરેશભાઇ", phone: "6351361594", regularDuty: "શી-ટીમ / મહિલા હેલ્પ", status: "AVAILABLE" },
+            { id: 11, role: "UPC", buckNo: "489", grp: "કોર્ટ-ડ્યુટી", name: "વિપુલભાઇ સરદારભાઇ", phone: "9998095371", regularDuty: "કોર્ટ ડ્યુટી (દાંતા)", status: "DUTY" },
+            { id: 12, role: "UHC", buckNo: "1659", grp: "કુવારસી ઓ.પી.", name: "મનુભાઇ લતાભાઇ", phone: "9870057366", regularDuty: "કુવારસી ઓ.પી. ઇન્ચાર્જ", status: "DUTY" },
+            { id: 13, role: "UPC", buckNo: "1841", grp: "કુવારસી ઓ.પી.", name: "મિથુનભાઇ કબીરાભાઇ", phone: "7862852135", regularDuty: "સમંસ બજવણી", status: "LEAVE", leaveDetails: "સીકમાં (Sick Leave) - તા.૨૦/૧૦/૨૦૨૬ થી" },
+            { id: 14, role: "UASI", buckNo: "1032", grp: "મંડાલી ઓ.પી", name: "બાબુભાઇ મણીલાલ", phone: "9727285924", regularDuty: "મંડાલી ઓ.પી. ઇન્ચાર્જ", status: "DUTY" },
+            { id: 15, role: "APC", buckNo: "687", grp: "મંડાલી ઓ.પી", name: "દિલીપભાઇ લેબાભાઇ", phone: "7572911024", regularDuty: "મંડાલી ઓ.પી. રાઇટર", status: "AVAILABLE" },
+            { id: 16, role: "UASI", buckNo: "1599", grp: "બીટ-૧", name: "લલીતભાઇ જીવણભાઇ", phone: "8825848021", regularDuty: "બીટ નં.૦૧ ઇન્ચાર્જ", status: "DUTY" },
+            { id: 17, role: "UPC", buckNo: "2041", grp: "બીટ-૧", name: "ગોવિંદભાઇ નારણાજી", phone: "9429656918", regularDuty: "બીટ નં.૦૧ રાઇટર", status: "AVAILABLE" },
+            { id: 18, role: "ASI", buckNo: "2170", grp: "બીટ-૨", name: "ધવલભાઇ ઉજમાભાઇ", phone: "8095514185", regularDuty: "બીટ નં.૦૨ ઇન્ચાર્જ", status: "DUTY" },
+            { id: 19, role: "APC", buckNo: "279", grp: "બીટ-૨", name: "રમેશસિંહ દાંલતસિંહ", phone: "9662237028", regularDuty: "સમંસ બજવણી / HQ M.T. ડ્રાઇવર", status: "DEPUTATION", deputationDetails: "પાલનપુર HQ M.T. શાખામાં ડ્રાઇવર તરીકે (તા.૨૧/૧૦ થી તા.૦૪/૧૧)" },
+            { id: 20, role: "UASI", buckNo: "1270", grp: "પર્સનલ", name: "ભરતભાઇ લક્ષ્મણભાઇ", phone: "9428980064", regularDuty: "પર્સનલ રાઇટર", status: "AVAILABLE" },
+            { id: 21, role: "UHC", buckNo: "2248", grp: "પર્સનલ", name: "મહિપાલસિંહ પ્રધ્યુમનસિંહ", phone: "9879569703", regularDuty: "ડિટેક્શન મદદ", status: "LEAVE", leaveDetails: "હક્ક રજા - તા.૧૦/૧૦/૨૦૨૬ થી તા.૨૧/૧૦/૨૦૨૬ સુધી" },
+            { id: 22, role: "UPC", buckNo: "1669", grp: "પર્સનલ", name: "ગુલાબભાઇ મઘાભાઇ", phone: "9586036686", regularDuty: "રાઇટર મદદ", status: "AVAILABLE" },
+            { id: 23, role: "UHC", buckNo: "1712", grp: "ટ્રાફીક", name: "ઇશ્વરભાઇ ગોકળભાઇ", phone: "8878423184", regularDuty: "ટ્રાફિક ડ્યુટી", status: "DUTY" },
+            { id: 24, role: "APC", buckNo: "650", grp: "ટ્રાફીક", name: "બ્રિજેશભાઇ ફલજીભાઇ", phone: "8408408508", regularDuty: "ટ્રાફિક / ડિ.સ્ટાફ", status: "DUTY" },
+            { id: 25, role: "ULR", buckNo: "2364", grp: "ટ્રાફીક", name: "રાહુલભાઇ રાજાજી", phone: "8733819624", regularDuty: "જનરલ", status: "AVAILABLE" },
+            { id: 26, role: "UPC", buckNo: "1703", grp: "ટ્રાફીક", name: "દિપકભાઇ પાંચાભાઇ", phone: "9824764205", regularDuty: "જનરલ / 112 વાન", status: "DUTY" },
+            { id: 27, role: "UPC", buckNo: "1299", grp: "ટ્રાફીક", name: "શૈલેશકુમાર મુકેશભાઇ", phone: "9327373240", regularDuty: "જનરલ", status: "AVAILABLE" },
+            { id: 28, role: "D.APC", buckNo: "397", grp: "ડ્રાઇવર", name: "કમલેશજી હરચંદજી", phone: "9979013689", regularDuty: "સરકારી વાહન ડ્રાઇવર", status: "DUTY" },
+            { id: 29, role: "D.APC", buckNo: "726", grp: "ડ્રાઇવર", name: "મનહરસિંહ ભમરસિંહ", phone: "9724856926", regularDuty: "સરકારી વાહન ડ્રાઇવર", status: "DUTY" },
+            { id: 30, role: "AHC", buckNo: "580", grp: "૧૧૨ જન રક્ષક", name: "બાબુભાઇ લેબાભાઇ", phone: "9925546235", regularDuty: "112 જન રક્ષક વાન", status: "DUTY" },
+            { id: 31, role: "AHC", buckNo: "359", grp: "૧૧૨ જન રક્ષક", name: "અંબારામ સવજીભાઇ", phone: "9825528119", regularDuty: "112 જન રક્ષક વાન", status: "DUTY" },
+            { id: 32, role: "UPC", buckNo: "1615", grp: "૧૧૨ જન રક્ષક", name: "રમેશભાઇ ચેલાભાઇ", phone: "8888013043", regularDuty: "112 જન રક્ષક વાન", status: "AVAILABLE" },
+            { id: 33, role: "UPC", buckNo: "1995", grp: "૧૧૨ જન રક્ષક", name: "ભરતસિંહ જગતસિંહ", phone: "9327664760", regularDuty: "112 જન રક્ષક વાન", status: "LEAVE", leaveDetails: "સીકમાં (Sick Leave) - તા.૩૧/૦૮/૨૦૨૬ થી" },
+            { id: 34, role: "UHC", buckNo: "1025", grp: "પ્રતિનિયુક્તિ", name: "મહેન્દ્રસિંહ નરપતસિંહ", phone: "7600912037", regularDuty: "પ્રતિ નિયુક્તિ", status: "DEPUTATION", deputationDetails: "દાંતા SDPO કચેરી" },
+            { id: 35, role: "AWPC", buckNo: "428", grp: "પ્રતિનિયુક્તિ", name: "રીન્કુબેન લગધિરભાઇ", phone: "9427996963", regularDuty: "પ્રતિ નિયુક્તિ", status: "DEPUTATION", deputationDetails: "સઘન સુરક્ષા ડ્યુટી" }
+        ];
+
+        // Active Bandobast Orders List
+        let bandobastOrders = [
+            {
+                id: 1,
+                title: "માછલા ગામે તકેદારી બંદોબસ્ત",
+                startDate: "2026-10-22",
+                endDate: "2026-10-23",
+                details: "માછલા ગામે શાંતિ અને વ્યવસ્થા જાળવણી અર્થે વિશેષ તકેદારી પેટ્રોલીંગ અને બંદોબસ્ત. (GRD-04 સ્ટાફ સાથે)",
+                assignedStaffIds: [10, 15, 22]
+            }
+        ];
+
+        // TAB SWITCHING FUNCTION
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-section').forEach(sec => sec.classList.add('hidden'));
+            document.getElementById('sec-' + tabName).classList.remove('hidden');
+
+            // Toggle active styling on tabs
+            ['roster', 'perm', 'bandobast', 'deputation', 'available', 'leaves'].forEach(t => {
+                const btn = document.getElementById('tab-' + t);
+                if (t === tabName) {
+                    btn.classList.add("active");
+                } else {
+                    btn.classList.remove("active");
+                }
+            });
+        }
+
+        // INITIALIZE APP DATA & UI
+        function initApp() {
+            renderPerm();
+            saveAll(); renderRoster();
+            updateStats();
+            renderRosterViews();
+            renderBandobastModule();
+            renderDeputationTable();
+            renderAvailableTable();
+            renderLeavesTable();
+            populateLeaveDropdown();
+        }
+
+        // CALCULATE AND UPDATE STAT COUNTERS
+        function updateStats() {
+            const total = staffMaster.length;
+            const duty = staffMaster.filter(s => s.status === 'DUTY').length;
+            const deputation = staffMaster.filter(s => s.status === 'DEPUTATION').length;
+            const leave = staffMaster.filter(s => s.status === 'LEAVE').length;
+            
+            // Calculate assigned to special bandobast
+            let bandobastAssignedIds = new Set();
+            bandobastOrders.forEach(bo => bo.assignedStaffIds.forEach(id => bandobastAssignedIds.add(id)));
+
+            const available = staffMaster.filter(s => s.status === 'AVAILABLE' && !bandobastAssignedIds.has(s.id)).length;
+
+            document.getElementById('stat-total').innerText = total;
+            document.getElementById('stat-duty').innerText = duty;
+            document.getElementById('stat-deputation').innerText = deputation;
+            document.getElementById('stat-leave').innerText = leave;
+            document.getElementById('stat-available').innerText = available;
+        }
+
+        // RENDER ROSTER TAB DYNAMIC SECTIONS
+        function renderRosterViews() {
+            // 1. Active Bandobast in Roster
+            const bContainer = document.getElementById('roster-active-bandobast-list');
+            if (bandobastForDate().length === 0) {
+                bContainer.innerHTML = `<p class="text-gray-500 italic">હાલમાં કોઈ ખાસ બંદોબસ્ત ફાળવેલ નથી.</p>`;
+            } else {
+                bContainer.innerHTML = bandobastForDate().map(b => {
+                    const staffList = sortStaffByRank(b.assignedStaffIds.map(id => staffMaster.find(s => s.id === id)).filter(Boolean))
+                        .map(st => `${st.role} ${st.name} (બ.નં.${st.buckNo})`).join(', ');
+
+                    return `
+                        <div class="p-2 border border-indigo-200 bg-indigo-50/50 rounded">
+                            <span class="font-bold text-indigo-900">${b.title}</span> 
+                            <span class="text-gray-500">(${b.startDate} થી ${b.endDate})</span>: 
+                            <span class="text-gray-800">${b.details}</span> - 
+                            <span class="font-semibold text-indigo-700">તૈનાત સ્ટાફ: ${staffList || 'કોઈ નહીં'}</span>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            // 2. Leaves in Roster (Rank Sorted)
+            const lContainer = document.getElementById('roster-leave-list');
+            const leaves = sortStaffByRank(staffMaster.filter(s => s.status === 'LEAVE'));
+            lContainer.innerHTML = leaves.map(l => `
+                <li><strong>${l.role} ${l.name} (બ.નં.${l.buckNo}):</strong> ${l.leaveDetails || 'રજા પર'}</li>
+            `).join('');
+
+            // 3. Deputation in Roster (Rank Sorted)
+            const dContainer = document.getElementById('roster-deputation-list');
+            const deputations = sortStaffByRank(staffMaster.filter(s => s.status === 'DEPUTATION'));
+            dContainer.innerHTML = deputations.map(d => `
+                <li><strong>${d.role} ${d.name} (બ.નં.${d.buckNo}):</strong> ${d.deputationDetails || 'પ્રતિ નિયુક્તિ'}</li>
+            `).join('');
+        }
+
+        // RENDER BANDOBAST CREATION MODULE & LIST
+        function renderBandobastModule() {
+            const staffContainer = document.getElementById('staff-selection-list');
+            
+            let assignedIds = new Set();
+            bandobastOrders.forEach(b => b.assignedStaffIds.forEach(id => assignedIds.add(id)));
+
+            // Rank sorted selection list (PI to PC)
+            const selectableStaff = sortStaffByRank(staffMaster.filter(s => s.status !== 'LEAVE' && s.status !== 'DEPUTATION'));
+
+            staffContainer.innerHTML = selectableStaff.map(s => {
+                const isAssigned = assignedIds.has(s.id);
+                return `
+                    <label class="flex items-center space-x-2 p-1.5 hover:bg-white rounded border border-transparent hover:border-gray-200 cursor-pointer text-xs">
+                        <input type="checkbox" value="${s.id}" class="bb-staff-check rounded text-indigo-600 focus:ring-indigo-500">
+                        <span class="${isAssigned ? 'text-amber-700 font-semibold' : 'text-gray-800'}">
+                            <strong>${s.role}</strong> ${s.name} (બ.નં.${s.buckNo}) ${isAssigned ? '- [અન્ય બંદોબસ્તમાં]' : ''}
+                        </span>
+                    </label>
+                `;
+            }).join('');
+
+            const cardsContainer = document.getElementById('bandobast-cards-container');
+            document.getElementById('bandobast-count-badge').innerText = bandobastOrders.length;
+
+            if (bandobastOrders.length === 0) {
+                cardsContainer.innerHTML = `<div class="p-8 text-center text-gray-500 bg-gray-50 rounded-lg border border-dashed border-gray-300">હાલમાં કોઈ ઓર્ડર ફાળવેલ નથી. ડાબી બાજુથી નવો બંદોબસ્ત બનાવો.</div>`;
+                return;
+            }
+
+            cardsContainer.innerHTML = bandobastOrders.map(b => {
+                // Sort assigned staff in bandobast card by Rank
+                const staffArray = sortStaffByRank(b.assignedStaffIds.map(id => staffMaster.find(s => s.id === id)).filter(Boolean));
+
+                return `
+                    <div class="border border-gray-300 rounded-xl bg-white p-4 shadow-sm duty-card" id="bb-card-${b.id}">
+                        <div class="flex justify-between items-start border-b border-gray-200 pb-3 mb-3">
+                            <div>
+                                <span class="bg-indigo-100 text-indigo-800 font-bold text-xs px-2 py-0.5 rounded">બંદોબસ્ત ઓર્ડર</span>
+                                <h4 class="text-base font-bold text-gray-900 mt-1">${b.title}</h4>
+                                <p class="text-xs text-gray-500">સમયગાળો: ${b.startDate} થી ${b.endDate}</p>
+                            </div>
+                            <div class="flex items-center space-x-2 no-print">
+                                <button onclick="exportToPDF('bb-card-${b.id}', 'Bandobast_Order_${b.id}')" class="px-2.5 py-1 bg-red-600 text-white rounded text-xs font-semibold hover:bg-red-700">
+                                    <i class="fa-solid fa-file-pdf mr-1"></i> PDF
+                                </button>
+                                <button onclick="exportToImage('bb-card-${b.id}', 'Bandobast_Order_${b.id}')" class="px-2.5 py-1 bg-emerald-600 text-white rounded text-xs font-semibold hover:bg-emerald-700">
+                                    <i class="fa-solid fa-file-image mr-1"></i> ફોટો
+                                </button>
+                                <button onclick="deleteBandobast(${b.id})" class="px-2 py-1 bg-gray-200 text-gray-700 hover:bg-red-100 hover:text-red-700 rounded text-xs">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="text-xs text-gray-700 mb-3 bg-gray-50 p-2.5 rounded border border-gray-200">
+                            <strong>કામગીરી / વિગત:</strong> ${b.details}
+                        </div>
+
+                        <div>
+                            <h5 class="text-xs font-bold text-gray-800 mb-2">ફાળવેલ સ્ટાફ વિગત (હોદ્દા વાઇઝ): (${staffArray.length}):</h5>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
+                                ${staffArray.map(st => `
+                                    <div class="p-2 border border-gray-200 rounded flex justify-between items-center bg-white">
+                                        <div>
+                                            <span class="font-bold text-indigo-900">${st.role} ${st.name}</span>
+                                            <span class="text-gray-500 text-xs block">બ.નં: ${st.buckNo} | મૂળ ડ્યુટી: ${st.regularDuty}</span>
+                                        </div>
+                                        <a href="tel:${st.phone}" class="text-blue-600 hover:underline text-xs"><i class="fa-solid fa-phone mr-1"></i>${st.phone}</a>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+
+                        <div class="mt-4 pt-2 border-t border-gray-200 flex justify-between text-xs text-gray-500 font-semibold print-only">
+                            <span>હડાદ પોલીસ સ્ટેશન</span>
+                            <span>I/C પો.ઇન્સ સાહેબની સહી</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // ADD NEW STAFF TO MASTER
+        function handleAddStaff(e) {
+            e.preventDefault();
+            const role = document.getElementById('add-role').value;
+            const buckNo = document.getElementById('add-buck').value;
+            const name = document.getElementById('add-name').value;
+            const regularDuty = document.getElementById('add-duty').value || "જનરલ નોકરી";
+            const phone = document.getElementById('add-phone').value;
+
+            const newStaff = {
+                id: Date.now(),
+                role,
+                buckNo,
+                name,
+                phone,
+                regularDuty,
+                status: 'AVAILABLE'
+            };
+
+            staffMaster.push(newStaff);
+            e.target.reset();
+            initApp();
+            alert(`${role} ${name} ને સફળતાપૂર્વક પત્રકમાં ઉમેરી દેવામાં આવ્યા છે.`);
+        }
+
+        // ADD DEPUTATION STAFF
+        function handleAddDeputation(e) {
+            e.preventDefault();
+            const role = document.getElementById('dep-role').value;
+            const buckNo = document.getElementById('dep-buck').value;
+            const name = document.getElementById('dep-name').value;
+            const deputationDetails = document.getElementById('dep-details').value;
+            const phone = document.getElementById('dep-phone').value;
+
+            const newStaff = {
+                id: Date.now(),
+                role,
+                buckNo,
+                name,
+                phone,
+                regularDuty: "પ્રતિ નિયુક્તિ",
+                status: 'DEPUTATION',
+                deputationDetails
+            };
+
+            staffMaster.push(newStaff);
+            e.target.reset();
+            initApp();
+            alert(`${role} ${name} ને પ્રતિ નિયુક્તિમાં ઉમેરવામાં આવ્યા છે.`);
+        }
+
+        // DELETE/REMOVE STAFF FROM MASTER
+        function deleteStaff(id) {
+            const st = staffMaster.find(s => s.id === id);
+            if (st && confirm(`શું તમે ${st.role} ${st.name} ને પત્રકમાંથી કમી (Delete) કરવા માગો છો?`)) {
+                staffMaster = staffMaster.filter(s => s.id !== id);
+                // Also remove from bandobast if assigned
+                bandobastOrders.forEach(b => {
+                    b.assignedStaffIds = b.assignedStaffIds.filter(sid => sid !== id);
+                });
+                initApp();
+            }
+        }
+
+        // MARK LEAVE / SICK / ABSENT / OTHER
+        function handleMarkLeave(e) {
+            e.preventDefault();
+            const staffId = parseInt(document.getElementById('leave-staff-id').value);
+            const leaveType = document.getElementById('leave-type').value;
+            const details = document.getElementById('leave-details').value;
+
+            const st = staffMaster.find(s => s.id === staffId);
+            if (st) {
+                st.status = 'LEAVE';
+                st.leaveDetails = `${leaveType} - ${details}`;
+                
+                // Remove from active bandobast if any
+                bandobastOrders.forEach(b => {
+                    b.assignedStaffIds = b.assignedStaffIds.filter(sid => sid !== staffId);
+                });
+
+                e.target.reset();
+                initApp();
+                alert(`${st.role} ${st.name} ની ${leaveType} વિગત નોંધાઈ ગઈ છે.`);
+            }
+        }
+
+        // MAKE AVAILABLE AGAIN (CANCEL LEAVE/DEPUTATION)
+        function makeAvailable(id) {
+            const st = staffMaster.find(s => s.id === id);
+            if (st) {
+                st.status = 'AVAILABLE';
+                delete st.leaveDetails;
+                delete st.deputationDetails;
+                initApp();
+                alert(`${st.role} ${st.name} ને પુનઃ બચતમાં (Available) હાજર કરવામાં આવ્યા છે.`);
+            }
+        }
+
+        // POPULATE LEAVE DROPDOWN (RANK SORTED PI -> PC)
+        function populateLeaveDropdown() {
+            const select = document.getElementById('leave-staff-id');
+            const availableStaff = sortStaffByRank(staffMaster.filter(s => s.status !== 'LEAVE'));
+            
+            select.innerHTML = availableStaff.map(s => `
+                <option value="${s.id}">${s.role} ${s.name} (બ.નં.${s.buckNo}) - ${s.regularDuty}</option>
+            `).join('');
+        }
+
+        // CREATE NEW BANDOBAST HANDLER
+        function handleCreateBandobast(e) {
+            e.preventDefault();
+            const title = document.getElementById('bb-title').value;
+            const startDate = document.getElementById('bb-start').value;
+            const endDate = document.getElementById('bb-end').value;
+            const details = document.getElementById('bb-details').value;
+
+            const selectedChecks = document.querySelectorAll('.bb-staff-check:checked');
+            const assignedStaffIds = Array.from(selectedChecks).map(cb => parseInt(cb.value));
+
+            if (assignedStaffIds.length === 0) {
+                alert("મહેરબાની કરીને ઓછામાં ઓછો ૧ સ્ટાફ પસંદ કરો.");
+                return;
+            }
+
+            const newOrder = {
+                id: Date.now(),
+                title,
+                startDate,
+                endDate,
+                details,
+                assignedStaffIds
+            };
+
+            bandobastOrders.unshift(newOrder);
+            document.getElementById('bandobast-form').reset();
+            
+            initApp();
+            alert("નવો બંદોબસ્ત ઓર્ડર સફળતાપૂર્વક જનરેટ થઈ ગયો છે!");
+        }
+
+        // DELETE BANDOBAST
+        function deleteBandobast(id) {
+            if (confirm("શું તમે આ બંદોબસ્ત ઓર્ડર રદ કરવા માગો છો?")) {
+                bandobastOrders = bandobastOrders.filter(b => b.id !== id);
+
+
+
+                initApp();
+            }
+        }
+
+        // RENDER DEPUTATION TABLE (RANK SORTED)
+        function renderDeputationTable() {
+            const tbody = document.getElementById('deputation-table-body');
+            const deputations = sortStaffByRank(staffMaster.filter(s => s.status === 'DEPUTATION'));
+
+            if (deputations.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="text-center p-4 text-gray-500">હાલમાં કોઈ સ્ટાફ પ્રતિ નિયુક્તિમાં નથી.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = deputations.map((st, idx) => `
+                <tr class="hover:bg-purple-50/50">
+                    <td class="border border-gray-300 p-2 font-medium">${idx + 1}</td>
+                    <td class="border border-gray-300 p-2 font-bold text-purple-900">${st.role} (બ.નં.${st.buckNo})</td>
+                    <td class="border border-gray-300 p-2 font-semibold">${st.name}</td>
+                    <td class="border border-gray-300 p-2 text-gray-800">${st.deputationDetails || 'પ્રતિ નિયુક્તિ'}</td>
+                    <td class="border border-gray-300 p-2">${st.phone}</td>
+                    <td class="border border-gray-300 p-2 no-print">
+                        <button onclick="makeAvailable(${st.id})" title="હાજર કરો" class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded hover:bg-green-200 mr-1">
+                            <i class="fa-solid fa-user-check mr-1"></i>હાજર
+                        </button>
+                        <button onclick="deleteStaff(${st.id})" title="કમી કરો" class="text-xs bg-red-100 text-red-700 px-2 py-1 rounded hover:bg-red-200">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // RENDER AVAILABLE STAFF TABLE (RANK SORTED PI -> PC)
+        function renderAvailableTable() {
+            const tbody = document.getElementById('available-table-body');
+            
+            let bandobastAssignedIds = new Set();
+            bandobastOrders.forEach(bo => bo.assignedStaffIds.forEach(id => bandobastAssignedIds.add(id)));
+
+            const availables = sortStaffByRank(staffMaster.filter(s => s.status === 'AVAILABLE' && !bandobastAssignedIds.has(s.id)));
+
+            if (availables.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="text-center p-4 text-gray-500">હાલમાં કોઈ પણ સ્ટાફ બચતમાં ઉપલબ્ધ નથી.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = availables.map((st, idx) => `
+                <tr class="hover:bg-green-50/50">
+                    <td class="border border-gray-300 p-2 font-medium">${idx + 1}</td>
+                    <td class="border border-gray-300 p-2 font-bold text-green-900">${st.role} (બ.નં.${st.buckNo})</td>
+                    <td class="border border-gray-300 p-2 font-semibold">${st.name}</td>
+                    <td class="border border-gray-300 p-2">${st.regularDuty}</td>
+                    <td class="border border-gray-300 p-2">${st.phone}</td>
+                    <td class="border border-gray-300 p-2 no-print">
+                        <button onclick="deleteStaff(${st.id})" title="કમી કરો" class="text-xs bg-red-100 text-red-700 px-2 py-1 rounded hover:bg-red-200">
+                            <i class="fa-solid fa-trash mr-1"></i>કમી કરો
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // RENDER LEAVES & SICK TABLE (RANK SORTED PI -> PC)
+        function renderLeavesTable() {
+            const tbody = document.getElementById('leaves-table-body');
+            const leaves = sortStaffByRank(staffMaster.filter(s => s.status === 'LEAVE'));
+
+            if (leaves.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="text-center p-4 text-gray-500">હાલમાં કોઈ સ્ટાફ રજા, સીક કે ગેરહાજર પર નથી.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = leaves.map((st, idx) => `
+                <tr class="hover:bg-red-50/50">
+                    <td class="border border-gray-300 p-2 font-medium">${idx + 1}</td>
+                    <td class="border border-gray-300 p-2 font-bold text-red-900">${st.role} (બ.નં.${st.buckNo})</td>
+                    <td class="border border-gray-300 p-2 font-semibold">${st.name}</td>
+                    <td class="border border-gray-300 p-2 font-bold text-red-700">રજા / ગેરહાજર</td>
+                    <td class="border border-gray-300 p-2">${st.leaveDetails || 'વિગત દર્શાવેલ નથી'}</td>
+                    <td class="border border-gray-300 p-2">${st.phone}</td>
+                    <td class="border border-gray-300 p-2 no-print">
+                        <button onclick="makeAvailable(${st.id})" title="હાજર કરો" class="text-xs bg-green-600 text-white px-2 py-1 rounded hover:bg-green-700 shadow">
+                            <i class="fa-solid fa-user-check mr-1"></i>હાજર કરો
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // EXPORT TO PDF FUNCTIONALITY
+        function exportToPDF(elementId, filename) {
+            const { jsPDF } = window.jspdf;
+            const element = document.getElementById(elementId);
+
+            html2canvas(element, {
+                scale: 2,
+                useCORS: true,
+                logging: false
+            }).then(canvas => {
+                const imgData = canvas.toDataURL('image/jpeg', 1.0);
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                const pdfWidth = pdf.internal.pageSize.getWidth();
+                const pdfHeight = pdf.internal.pageSize.getHeight();
+                
+                const imgWidth = canvas.width;
+                const imgHeight = canvas.height;
+                const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
+                
+                const imgX = (pdfWidth - imgWidth * ratio) / 2;
+                const imgY = 10;
+
+                pdf.addImage(imgData, 'JPEG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
+                pdf.save(`${filename}.pdf`);
+            });
+        }
+
+        // EXPORT TO IMAGE (PNG) FUNCTIONALITY
+        function exportToImage(elementId, filename) {
+            const element = document.getElementById(elementId);
+
+            html2canvas(element, {
+                scale: 2,
+                useCORS: true
+            }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `${filename}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            });
+        }
+
+// ===== તારીખ મુજબ નોકરી પત્રક / થીમ / બેકઅપ =====
+const DATA_KEY='hadad_data_v1';
+let isAdmin=sessionStorage.getItem('hadad_admin')==='1';
+let rosters={"2026-10-22": {"from": "2026-10-22", "to": "2026-10-23", "officer": "શ્રી I/C PI જે.જે. સરવૈયા સાહેબ", "duties": [{"duty": "પોસ્ટેઓ (PSO)", "shift": "૦૦/૦૦ થી ૦૮/૦૦", "staff": "UASI નિયાઝખાન બબલમિયા (બ.નં.૧૦૩૮)", "remark": "૭૫૮૮૫૮૩૪૮૨"}, {"duty": "પોસ્ટેઓ (PSO)", "shift": "૦૮/૦૦ થી ૨૪/૦૦", "staff": "UHC બાબુભાઇ મંછાભાઇ (બ.નં.૧૩૫૬)", "remark": "૯૬૨૪૪૭૮૭૬૮"}, {"duty": "વી.એચ.એફ (VHF)", "shift": "૦૦/૦૦ થી ૦૮/૦૦", "staff": "UASI નિયાઝખાન બબલમિયા (બ.નં.૧૦૩૮)", "remark": ""}, {"duty": "વી.એચ.એફ (VHF)", "shift": "૦૮/૦૦ થી ૨૪/૦૦", "staff": "UHC બાબુભાઇ મંછાભાઇ (બ.નં.૧૩૫૬)", "remark": ""}, {"duty": "કોમ્પ્યુટર ઓપરેટર", "shift": "૦૦/૦૦ થી ૦૮/૦૦ & ૨૦/૦૦ થી ૨૪/૦૦", "staff": "UPC જયેશકુમાર ચંન્દ્રકાંન્તભાઇ (બ.નં.૧૫૪૮)", "remark": "૭૬૨૨૮૫૨૦૨૩ (ઇ-ગુજકોપ/પોકેટ કોપ)"}, {"duty": "કોમ્પ્યુટર ઓપરેટર", "shift": "૦૮/૦૦ થી ૨૦/૦૦", "staff": "WUHC લીલાબેન ભોળાભાઇ (બ.નં.૨૩૧૮)", "remark": "૯૬૩૮૦૮૦૪૨૭ (ચાર્જ રા.હેડ)"}, {"duty": "ડ્રાઇવર ડ્યુટી", "shift": "૦૦/૦૦ થી ૦૮/૦૦", "staff": "D.APC કમલેશજી હરસનજી (બ.નં.૩૯૭)", "remark": "૯૯૭૯૦૧૩૬૮૯"}, {"duty": "ડ્રાઇવર ડ્યુટી", "shift": "૦૮/૦૦ થી ૨૪/૦૦", "staff": "D.APC મનહરસિંહ ભમરસિંહ (બ.નં.૭૨૬)", "remark": "૯૭૨૪૮૫૬૯૨૬"}], "keys": [{"label": "રાઇટર હેડ કોન્સ.", "staff": "WUHC લીલાબેન ભોળાભાઇ (બ.નં.૨૩૧૮)"}, {"label": "ક્રાઇમ શાખા", "staff": "WUASI સુમિત્રાબેન કમજીભાઇ (બ.નં.૧૦૩૫)"}, {"label": "બારનીશી / શી-ટીમ", "staff": "WUASI મંજુલાબેન નાથાભાઇ (બ.નં.૧૩૭૦)"}, {"label": "કોર્ટ ડ્યુટી (દાંતા)", "staff": "UPC વિપુલભાઇ સરદારભાઇ (બ.નં.૪૮૯)"}, {"label": "ટ્રાફિક ડ્યુટી", "staff": "UHC ઇશ્વરભાઇ ગોકળભાઇ (૧૭૧૨), APC બ્રિજેશકુમાર (૬૫૦)"}, {"label": "બીટ નં.૦૧ ચાર્જ", "staff": "UASI લલીતભાઇ જીવણભાઇ (બ.નં.૧૫૯૯)"}, {"label": "બીટ નં.૦૨ ચાર્જ", "staff": "ASI ધવલભાઇ ઉજમાભાઇ (બ.નં.૨૧૭૦)"}, {"label": "મંડાલી ઓ.પી. ચાર્જ", "staff": "UASI બાબુભાઇ મણીલાલ (બ.નં.૧૦૩૨)"}, {"label": "કુંવારસી ઓ.પી. ચાર્જ", "staff": "UHC મનુભાઇ લતાભાઇ (બ.નં.૧૬૫૯)"}], "vanTitle": "૧૧૨ જન રક્ષક વાન (બોલેરો ગાડી નં. GJ-18 BX-0114) - ૧૨ કલાક શીફ્ટ", "van": [{"label": "શીફ્ટ-૦૧", "staff": "AHC અંબારામ સવજીભાઇ (૩૫૯), APC બીપીનભાઇ ચંદુભાઇ (૩૨૮)"}, {"label": "શીફ્ટ-૦૨", "staff": "AHC બાબુભાઇ લેબાભાઇ (૫૮૦), UPC દિપકભાઇ પાંચાભાઇ (૧૭૦૩)"}, {"label": "૧૧૨ ડ્રાઇવર", "staff": "(૧) હિતેશકુમાર જગદીશભાઇ દાવડા (ઘુંઘરમાળ) ૯૮૭૯૪૫૪૦૬૧, (૨) અમરતભાઇ કચરાભાઇ કોદરવી (કુવારસી) ૭૦૧૬૯૬૯૬૨૦, (૩) રણજીતજી માધુજી પરમાર (જસ્વાપુર) ૯૩૨૭૧૮૭૧૪૫"}, {"label": "નોંધ", "staff": "તમામે ૧૨ કલાકની શીફ્ટ મુજબ ફરજ બજાવવાની રહેશે"}], "nIn": "ASI ધવલભાઇ ઉજમાભાઇ (૨૧૭૦) સાથે UHC મનુભાઇ લતાભાઇ (૧૬૫૯)", "nPts": "હડાદ બસ સ્ટેન્ડ, પોસીના ચાર રસ્તા, મંગલમ પેટ્રોલ પંપ, ઇન્દિરા ચોક, બરોડા બેન્ક, સોની બજાર, ભાણપુર, મંડાલી, બામોદ્રા, કુંવારસી.", "nNote": "નાઇટ પેટ્રોલીંગ ઇન્ચાર્જશ્રીએ માછલા ગામે પેટ્રોલીંગ કરી ખેરીયત મેળવવી."}}, curDate='', draft=null, editKey=null;
+(function(){if(!isAdmin)return;try{const d=JSON.parse(localStorage.getItem(DATA_KEY));if(d){if(d.rosters)rosters=d.rosters;if(d.staffMaster)staffMaster=d.staffMaster;if(d.bandobastOrders)bandobastOrders=d.bandobastOrders;}}catch(e){}})();
+function saveAll(){if(!isAdmin)return;try{localStorage.setItem(DATA_KEY,JSON.stringify({rosters,staffMaster,bandobastOrders}))}catch(e){}}
+const G=s=>String(s).replace(/\d/g,d=>'૦૧૨૩૪૫૬૭૮૯'[d]);
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fd=d=>{const p=d.split('-');return G(p[2]+'/'+p[1]+'/'+p[0])};
+const WD=['રવિવાર','સોમવાર','મંગળવાર','બુધવાર','ગુરૂવાર','શુક્રવાર','શનિવાર'];
+const wdOf=d=>WD[new Date(d+'T00:00:00').getDay()];
+const pad=n=>String(n).padStart(2,'0');
+function addDays(d,n){const x=new Date(d+'T00:00:00');x.setDate(x.getDate()+n);return x.getFullYear()+'-'+pad(x.getMonth()+1)+'-'+pad(x.getDate())}
+const keysDesc=()=>Object.keys(rosters).sort().reverse();
+function findKey(d){return keysDesc().find(k=>k<=d&&d<=(rosters[k].to||k))||null}
+function bandobastForDate(){return bandobastOrders.filter(b=>(!b.startDate||b.startDate<=curDate)&&(!b.endDate||curDate<=b.endDate))}
+function shiftDay(n){curDate=addDays(curDate,n);renderRoster()}
+(function(){const t=new Date(),td=t.getFullYear()+'-'+pad(t.getMonth()+1)+'-'+pad(t.getDate());curDate=findKey(td)?td:(keysDesc()[0]||td)})();
+
+function renderRoster(){
+  document.getElementById('roster-date').value=curDate;
+  document.getElementById('roster-wd').textContent=wdOf(curDate);
+  document.getElementById('staff-dl').innerHTML=sortStaffByRank(staffMaster).map(s=>`<option value="${esc(s.role+' '+s.name+' (બ.નં.'+G(s.buckNo)+')')}">`).join('');
+  document.getElementById('roster-chips').innerHTML=keysDesc().map(k=>{const on=k===findKey(curDate);return `<button onclick="curDate='${k}';renderRoster()" class="px-2 py-0.5 rounded-full text-xs border ${on?'bg-indigo-700 text-white border-indigo-700':'bg-white text-indigo-800 border-indigo-200'}">${fd(k)}</button>`}).join('');
+  const key=findKey(curDate),r=key&&rosters[key],area=document.getElementById('roster-print-area');
+  ['btn-edit','btn-del'].forEach(i=>document.getElementById(i).style.display=r?'':'none');
+  document.getElementById('roster-empty').classList.toggle('hidden',!!r);
+  area.classList.toggle('hidden',!r);
+  if(!r){document.getElementById('roster-sub').textContent='આ તારીખનું પત્રક નથી';return}
+  const f=r.from||key,to=r.to||f,td='border border-gray-300 p-2';
+  document.getElementById('roster-sub').textContent=`તા.${fd(f)} થી તા.${fd(to)} (${wdOf(f)} / ${wdOf(to)})`;
+  document.getElementById('rv-title').textContent=f===to?`તા.${fd(f)} રોજની નોકરી વહેચણી પત્ર`:`તા.${fd(f)} થી તા.${fd(to)} રોજની નોકરી વહેચણી પત્ર`;
+  document.getElementById('rv-officer').textContent=r.officer||'';
+  let h='',R=r.duties||[];
+  for(let i=0;i<R.length;){let j=i;while(j<R.length&&R[j].duty===R[i].duty)j++;
+    for(let k=i;k<j;k++)h+=`<tr>${k===i?`<td class="${td} font-semibold bg-gray-50" rowspan="${j-i}">${esc(R[i].duty)}</td>`:''}<td class="${td}">${esc(R[k].shift)}</td><td class="${td} font-medium">${esc(R[k].staff)}</td><td class="${td}">${esc(R[k].remark)||'-'}</td></tr>`;i=j}
+  document.getElementById('rv-duties').innerHTML=h;
+  document.getElementById('rv-keys').innerHTML=(r.keys||[]).map(k=>`<div class="p-2 border border-gray-200 rounded bg-gray-50"><span class="font-bold text-gray-700">${esc(k.label)}:</span> ${esc(k.staff)}</div>`).join('');
+  document.getElementById('rv-vantitle').textContent=r.vanTitle||'';
+  document.getElementById('rv-van').innerHTML=(r.van||[]).map(v=>`<div><span class="font-semibold">${esc(v.label)}:</span> ${esc(v.staff)}</div>`).join('');
+  document.getElementById('rv-nin').textContent=r.nIn||'';document.getElementById('rv-npts').textContent=r.nPts||'';document.getElementById('rv-nnote').textContent=r.nNote?'ખાસ નોંધ: '+r.nNote:'';
+  renderRosterViews();
+}
+
+// ----- એડિટર -----
+const FIELDS={duties:[['duty','નોકરી'],['shift','સમય'],['staff','કર્મચારી'],['remark','રીમાર્ક્સ']],keys:[['label','નોકરી / ચાર્જ'],['staff','કર્મચારી']],van:[['label','શીફ્ટ'],['staff','કર્મચારી']]};
+const COLS={duties:'3fr 2fr 4fr 2fr 30px',keys:'4fr 7fr 30px',van:'3fr 8fr 30px'};
+function openEditor(mode){
+  const k=findKey(curDate),prev=keysDesc().find(x=>x<=curDate)||keysDesc()[0],src=rosters[mode==='edit'?k:prev];
+  if(mode==='edit'&&!k)return;
+  if(mode!=='edit'&&!src){draft={from:curDate,to:addDays(curDate,1),officer:'',duties:[{duty:'',shift:'',staff:'',remark:''}],keys:[{label:'',staff:''}],vanTitle:'',van:[{label:'',staff:''}],nIn:'',nPts:'',nNote:''}}
+  else{draft=JSON.parse(JSON.stringify(src));
+    if(mode==='blank'){draft.duties.forEach(d=>{d.staff='';d.remark=''});draft.keys.forEach(d=>d.staff='');draft.van.forEach(d=>d.staff='');draft.nIn='';draft.nNote=''}
+    if(mode!=='edit'){draft.from=curDate;draft.to=addDays(curDate,1)}}
+  editKey=mode==='edit'?k:null;drawEditor();
+}
+function drawEditor(){
+  const e=document.getElementById('roster-editor'),I='class="w-full p-1.5 text-xs border border-gray-300 rounded"';
+  const grp=(g,title)=>`<h4 class="font-bold text-indigo-900 text-sm mt-4 mb-1">${title}</h4>`+draft[g].map((row,i)=>`<div style="display:grid;grid-template-columns:${COLS[g]};gap:4px;margin-bottom:4px">${FIELDS[g].map(([f,ph])=>`<input data-g="${g}" data-i="${i}" data-f="${f}" value="${esc(row[f])}" placeholder="${ph}" ${f==='staff'?'list="staff-dl"':''} ${I}>`).join('')}<button onclick="rowOp('${g}',${i},-1)" class="text-red-500"><i class="fa-solid fa-xmark"></i></button></div>`).join('')+`<button onclick="rowOp('${g}',0,1)" class="text-xs text-indigo-700 font-semibold"><i class="fa-solid fa-plus"></i> લાઇન ઉમેરો</button>`;
+  const sc=(s,ph)=>`<input data-s="${s}" value="${esc(draft[s])}" placeholder="${ph}" ${I}>`;
+  e.classList.remove('hidden');
+  e.innerHTML=`<div class="flex justify-between items-center mb-2"><h3 class="font-bold text-indigo-900">${editKey?'પત્રકમાં ફેરફાર':'નવું નોકરી પત્રક'}</h3><div class="space-x-2"><button onclick="saveRoster()" class="px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-semibold"><i class="fa-solid fa-floppy-disk mr-1"></i> સેવ કરો</button><button onclick="closeEditor()" class="px-3 py-1.5 bg-gray-500 text-white rounded-lg text-xs font-semibold">રદ</button></div></div>
+  <div class="grid grid-cols-2 gap-2 text-xs"><label>તારીખથી<input type="date" data-s="from" value="${draft.from}" ${I}></label><label>તારીખ સુધી<input type="date" data-s="to" value="${draft.to}" ${I}></label></div><div class="mt-2">${sc('officer','અધિકારીનું નામ (દા.ત. શ્રી I/C PI ... સાહેબ)')}</div>
+  ${grp('duties','૧. સ્ટેશન / વાયરલેસ / કમ્પ્યુટર / ડ્રાઇવર ફરજ')}${grp('keys','૨. ટેબલ શાખા / કોર્ટ / ઓ.પી. ચાર્જ')}<h4 class="font-bold text-amber-900 text-sm mt-4 mb-1">૧૧૨ વાન</h4>${sc('vanTitle','વાનનું શીર્ષક')}<div class="mt-1">${grp('van','')}</div>
+  <h4 class="font-bold text-indigo-900 text-sm mt-4 mb-1">૬. નાઇટ રાઉન્ડ</h4><div class="space-y-1">${sc('nIn','નાઇટ પેટ્રોલીંગ ઇન્ચાર્જ')}${sc('nPts','મુખ્ય પોઇન્ટ્સ')}${sc('nNote','ખાસ નોંધ')}</div>`;
+  e.scrollIntoView({behavior:'smooth',block:'start'});
+}
+function syncDraft(){const e=document.getElementById('roster-editor');e.querySelectorAll('[data-g]').forEach(x=>{draft[x.dataset.g][x.dataset.i][x.dataset.f]=x.value});e.querySelectorAll('[data-s]').forEach(x=>{draft[x.dataset.s]=x.value})}
+function rowOp(g,i,add){syncDraft();if(add>0){const o={};FIELDS[g].forEach(([f])=>o[f]='');draft[g].push(o)}else draft[g].splice(i,1);drawEditor()}
+function closeEditor(){document.getElementById('roster-editor').classList.add('hidden');draft=null}
+function saveRoster(){syncDraft();if(!draft.from){alert('તારીખ પસંદ કરો');return}
+  if(!draft.to||draft.to<draft.from)draft.to=draft.from;
+  draft.duties=draft.duties.filter(d=>d.duty||d.staff);draft.keys=draft.keys.filter(d=>d.label||d.staff);draft.van=draft.van.filter(d=>d.label||d.staff);
+  if(editKey)delete rosters[editKey];rosters[draft.from]=draft;curDate=draft.from;saveAll();closeEditor();renderRoster()}
+function deleteRoster(){const k=findKey(curDate);if(k&&confirm(fd(k)+' નું પત્રક કાઢી નાખવું છે?')){delete rosters[k];saveAll();renderRoster()}}
+
+// ----- બેકઅપ -----
+function exportData(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify({rosters,staffMaster,bandobastOrders},null,1)],{type:'application/json'}));a.download='data.json';a.click()}
+function importData(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(d.rosters)rosters=d.rosters;if(d.staffMaster)staffMaster=d.staffMaster;if(d.bandobastOrders)bandobastOrders=d.bandobastOrders;saveAll();initApp();alert('બેકઅપ લોડ થયું')}catch(e){alert('ફાઇલ માન્ય નથી')}};r.readAsText(f)}
+
+// ----- સ્થાયી પત્રક / સ્ટાફ ફેરફાર -----
+const GRPMAP={"-": "થાણાઅધિકારી", "1038": "પી.એસ.ઓ./ વાયરલેસ", "1356": "પી.એસ.ઓ./ વાયરલેસ", "1548": "કોમ્પ્યુટર ઓપરેટર ઇ-ગુજકોપ", "2318": "કોમ્પ્યુટર ઓપરેટર ઇ-ગુજકોપ", "1176": "એકાઉન્ટ રા.હેડ", "1035": "ક્રાઇમ", "1632": "એલ.આઇ.બી", "1370": "બારનીશી", "1138": "ટપાલ ડ્યુટી", "489": "કોર્ટ-ડ્યુટી", "1659": "કુવારસી ઓ.પી.", "1841": "કુવારસી ઓ.પી.", "1032": "મંડાલી ઓ.પી", "687": "મંડાલી ઓ.પી", "1599": "બીટ-૧", "2041": "બીટ-૧", "2170": "બીટ-૨", "279": "બીટ-૨", "1270": "પર્સનલ", "2248": "પર્સનલ", "1669": "પર્સનલ", "1712": "ટ્રાફીક", "650": "ટ્રાફીક", "2364": "ટ્રાફીક", "1703": "ટ્રાફીક", "1299": "ટ્રાફીક", "397": "ડ્રાઇવર", "726": "ડ્રાઇવર", "580": "૧૧૨ જન રક્ષક", "359": "૧૧૨ જન રક્ષક", "1615": "૧૧૨ જન રક્ષક", "1995": "૧૧૨ જન રક્ષક", "1025": "પ્રતિનિયુક્તિ", "428": "પ્રતિનિયુક્તિ"};
+function renderPerm(){
+  staffMaster.forEach(s=>{if(!s.grp)s.grp=GRPMAP[s.buckNo]||'અન્ય'});
+  const S=staffMaster,td='border border-gray-300 p-1.5';let h='',gi=0;
+  for(let i=0;i<S.length;){let j=i;while(j<S.length&&S[j].grp===S[i].grp)j++;gi++;
+    for(let k=i;k<j;k++){const s=S[k],st=s.status==='LEAVE'?' <b class="text-red-600">(રજા/સીક)</b>':s.status==='DEPUTATION'?' <b class="text-purple-600">(પ્રતિ નિયુક્તિ)</b>':'';
+      h+=`<tr>${k===i?`<td class="${td} font-bold text-center" rowspan="${j-i}">${G(gi)}</td><td class="${td} font-bold bg-gray-50" rowspan="${j-i}">${esc(S[i].grp)}</td>`:''}<td class="${td}">${G(k+1)}</td><td class="${td} font-bold">${esc(s.role)}</td><td class="${td}">${G(s.buckNo)}</td><td class="${td} font-semibold">${esc(s.name)}</td><td class="${td}">${G(s.phone)}</td><td class="${td}">${esc(s.regularDuty)}${st}</td><td class="${td} no-print admin-only whitespace-nowrap"><button onclick="openStaffModal(${s.id})" class="text-amber-600 mr-2"><i class="fa-solid fa-pen"></i></button><button onclick="deleteStaff(${s.id})" class="text-red-600"><i class="fa-solid fa-trash"></i></button></td></tr>`}
+    i=j}
+  document.getElementById('perm-body').innerHTML=h;
+  document.getElementById('grp-dl').innerHTML=[...new Set(S.map(s=>s.grp))].map(g=>`<option value="${esc(g)}">`).join('');
+}
+function openStaffModal(id){
+  const s=id?staffMaster.find(x=>x.id===id):{role:'UPC',buckNo:'',name:'',phone:'',regularDuty:'',grp:'',status:'AVAILABLE'};
+  const det=s.status==='LEAVE'?s.leaveDetails:s.status==='DEPUTATION'?s.deputationDetails:'',I='class="w-full p-2 border border-gray-300 rounded text-sm mb-1"';
+  const ST=[['DUTY','ફરજ / ડ્યુટીમાં'],['AVAILABLE','બચતમાં'],['LEAVE','રજા / સીક / ગેરહાજર'],['DEPUTATION','પ્રતિ નિયુક્તિ']];
+  const m=document.getElementById('staff-modal');
+  m.innerHTML=`<div class="bg-white rounded-xl p-5 w-full max-w-md overflow-y-auto text-xs" style="max-height:90vh"><h3 class="font-bold text-base text-indigo-900 mb-2">${id?'સ્ટાફ / નોકરીમાં ફેરફાર':'નવો સ્ટાફ ઉમેરો'}</h3>
+  <label>હોદ્દો<select id="sm-role" ${I}>${Object.keys(RANK_ORDER).map(r=>`<option ${r===s.role?'selected':''}>${r}</option>`).join('')}</select></label>
+  <label>બક્કલ નં.<input id="sm-buck" value="${esc(s.buckNo)}" ${I}></label><label>નામ<input id="sm-name" value="${esc(s.name)}" ${I}></label><label>મો.નં.<input id="sm-phone" value="${esc(s.phone)}" ${I}></label>
+  <label>નોકરી (ગ્રુપ)<input id="sm-grp" list="grp-dl" value="${esc(s.grp)}" ${I}></label><label>રીમાર્ક્સ / કામગીરી<input id="sm-duty" value="${esc(s.regularDuty)}" ${I}></label>
+  <label>સ્થિતિ<select id="sm-status" ${I}>${ST.map(([v,n])=>`<option value="${v}" ${v===s.status?'selected':''}>${n}</option>`).join('')}</select></label>
+  <label>રજા / પ્રતિ નિયુક્તિ વિગત<input id="sm-det" value="${esc(det)}" ${I}></label>
+  <div class="flex justify-end gap-2 mt-3"><button onclick="closeStaffModal()" class="px-3 py-2 bg-gray-500 text-white rounded-lg font-semibold">રદ</button><button onclick="saveStaff(${id})" class="px-3 py-2 bg-indigo-700 text-white rounded-lg font-semibold">સેવ કરો</button></div></div>`;
+  m.classList.remove('hidden');m.classList.add('flex');
+}
+function closeStaffModal(){const m=document.getElementById('staff-modal');m.classList.add('hidden');m.classList.remove('flex')}
+function saveStaff(id){
+  const v=x=>document.getElementById('sm-'+x).value.trim(),name=v('name');if(!name){alert('નામ લખો');return}
+  const st=v('status'),det=v('det'),o={role:v('role'),buckNo:v('buck')||'-',name,phone:v('phone'),grp:v('grp')||'અન્ય',regularDuty:v('duty')||'જનરલ નોકરી',status:st};
+  if(st==='LEAVE')o.leaveDetails=det;if(st==='DEPUTATION')o.deputationDetails=det;
+  if(id){const s=staffMaster.find(x=>x.id===id);delete s.leaveDetails;delete s.deputationDetails;Object.assign(s,o)}
+  else{o.id=Date.now();let p=-1;staffMaster.forEach((s,i)=>{if(s.grp===o.grp)p=i});if(p<0)staffMaster.push(o);else staffMaster.splice(p+1,0,o)}
+  closeStaffModal();initApp();
+}
+// ----- એડમિન અને ડેટા -----
+document.body.classList.toggle('is-admin',isAdmin);
+document.querySelectorAll('form').forEach(f=>{const c=f.closest('.rounded-xl');if(c)c.classList.add('admin-only')});
+function adminToggle(){if(isAdmin){sessionStorage.removeItem('hadad_admin');location.reload();return}
+  const p=prompt('એડમિન PIN નાખો:');if(p===null)return;if(p===(localStorage.getItem('hadad_pin')||'1234')){sessionStorage.setItem('hadad_admin','1');location.reload()}else alert('PIN ખોટો છે')}
+function changePin(){const p=prompt('નવો PIN (ઓછામાં ઓછા ૪ આંકડા):');if(p&&p.length>=4){localStorage.setItem('hadad_pin',p);alert('PIN બદલાયો')}}
+document.getElementById('theme-box').innerHTML=(isAdmin?'<button onclick="changePin()" class="px-2 py-1 rounded-lg text-xs bg-white/20 text-white">PIN બદલો</button>':'')+`<button onclick="adminToggle()" class="px-3 py-1.5 rounded-lg text-xs font-semibold ${isAdmin?'bg-yellow-400 text-gray-900':'bg-white/20 text-white'}"><i class="fa-solid ${isAdmin?'fa-lock-open':'fa-lock'} mr-1"></i> ${isAdmin?'એડમિન (લોગઆઉટ)':'એડમિન લોગિન'}</button>`;
+if(!isAdmin)fetch('data.json?'+Date.now()).then(r=>r.ok?r.json():null).then(d=>{if(!d)return;if(d.rosters)rosters=d.rosters;if(d.staffMaster)staffMaster=d.staffMaster;if(d.bandobastOrders)bandobastOrders=d.bandobastOrders;
+  const n=new Date(),td=n.getFullYear()+'-'+pad(n.getMonth()+1)+'-'+pad(n.getDate());curDate=findKey(td)?td:(keysDesc()[0]||td);initApp()}).catch(()=>{});
+// ----- દરેક મેનુનો અલગ રંગ -----
+const TAB_HUE={"roster": 215, "perm": 190, "bandobast": 28, "deputation": 275, "available": 145, "leaves": 350},LV={50:96,100:92,200:84,300:72,400:60,500:50,600:43,700:36,800:29,900:22};
+function setHue(h){for(const k in LV)document.documentElement.style.setProperty('--c-'+k,`${h} 70% ${LV[k]}%`)}
+const _sw=switchTab;switchTab=function(n){_sw(n);setHue(TAB_HUE[n]||215)};
+switchTab('roster');
+
+        // Initialize on DOM Ready
+        document.addEventListener('DOMContentLoaded', initApp);
+    </script>
+<datalist id="grp-dl"></datalist><div id="staff-modal" class="hidden no-print fixed inset-0 bg-black/50 items-center justify-center p-4" style="z-index:100"></div>
+</body>
+</html>
