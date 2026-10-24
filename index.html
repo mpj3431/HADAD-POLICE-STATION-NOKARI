@@ -52,7 +52,7 @@
     </header>
 
     <!-- Main Container -->
-    <div class="max-w-7xl mx-auto px-4 pt-6 md:flex md:gap-6"><aside class="no-print flex md:flex-col gap-2 overflow-x-auto md:overflow-visible pb-2 mb-4 md:mb-0 md:w-56 shrink-0 md:sticky md:top-20 md:self-start"><button onclick="switchTab('roster')" id="tab-roster" class="nav-btn" style="--h:215"><i class="fa-solid fa-clipboard-list mr-1"></i> ફુલ નોકરી પત્રક</button><button onclick="switchTab('perm')" id="tab-perm" class="nav-btn" style="--h:190"><i class="fa-solid fa-table-list mr-1"></i> સ્થાયી નોકરી પત્રક / સ્ટાફ</button><button onclick="switchTab('bandobast')" id="tab-bandobast" class="nav-btn" style="--h:28"><i class="fa-solid fa-people-group mr-1"></i> બંદોબસ્ત ફાળવણી</button><button onclick="switchTab('deputation')" id="tab-deputation" class="nav-btn" style="--h:275"><i class="fa-solid fa-building-user mr-1"></i> પ્રતિ નિયુક્તિ</button><button onclick="switchTab('available')" id="tab-available" class="nav-btn" style="--h:145"><i class="fa-solid fa-user-check mr-1"></i> બચતમાં સ્ટાફ</button><button onclick="switchTab('leaves')" id="tab-leaves" class="nav-btn" style="--h:350"><i class="fa-solid fa-user-clock mr-1"></i> રજા / સીક / ગેરહાજર</button>
+    <div class="max-w-7xl mx-auto px-4 pt-6 md:flex md:gap-6"><aside class="no-print flex md:flex-col gap-2 overflow-x-auto md:overflow-visible pb-2 mb-4 md:mb-0 md:w-56 shrink-0 md:sticky md:top-20 md:self-start"><button onclick="switchTab('roster')" id="tab-roster" class="nav-btn" style="--h:215"><i class="fa-solid fa-clipboard-list mr-1"></i> ફુલ નોકરી પત્રક</button><button onclick="switchTab('perm')" id="tab-perm" class="nav-btn" style="--h:190"><i class="fa-solid fa-table-list mr-1"></i> સ્થાયી નોકરી પત્રક / સ્ટાફ</button><button onclick="switchTab('bandobast')" id="tab-bandobast" class="nav-btn" style="--h:28"><i class="fa-solid fa-people-group mr-1"></i> બંદોબસ્ત ફાળવણી</button><button onclick="switchTab('night')" id="tab-night" class="nav-btn" style="--h:322"><i class="fa-solid fa-moon mr-1"></i> નાઇટ રાઉન્ડ</button><button onclick="switchTab('deputation')" id="tab-deputation" class="nav-btn" style="--h:275"><i class="fa-solid fa-building-user mr-1"></i> પ્રતિ નિયુક્તિ</button><button onclick="switchTab('available')" id="tab-available" class="nav-btn" style="--h:145"><i class="fa-solid fa-user-check mr-1"></i> બચતમાં સ્ટાફ</button><button onclick="switchTab('leaves')" id="tab-leaves" class="nav-btn" style="--h:350"><i class="fa-solid fa-user-clock mr-1"></i> રજા / સીક / ગેરહાજર</button>
 <div class="hidden md:block mt-3 pt-3 border-t border-gray-300 text-xs space-y-2"><button onclick="exportData()" class="nav-btn"><i class="fa-solid fa-download"></i> data.json ડાઉનલોડ</button><label class="nav-btn cursor-pointer"><i class="fa-solid fa-upload"></i> બેકઅપ ખોલો<input type="file" accept=".json" class="hidden" onchange="importData(this)"></label></div></aside><main class="flex-1 min-w-0">
 
         <!-- Top Overview Stats -->
@@ -201,6 +201,33 @@
             </div>
         </section>
 
+                <!-- TAB: NIGHT ROUND -->
+        <section id="sec-night" class="tab-section hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                <div class="lg:col-span-1 bg-white rounded-xl shadow-md p-5 border border-indigo-200 no-print">
+                    <h3 class="text-base font-bold text-indigo-900 mb-4 pb-2 border-b border-indigo-100"><i class="fa-solid fa-moon text-indigo-600 mr-2"></i> નવો નાઇટ રાઉન્ડ</h3>
+                    <form onsubmit="handleNight(event)" class="space-y-3 text-xs">
+                        <div><label class="block font-bold text-gray-700 mb-1">નાઇટ તારીખ (રાત્રિ શરૂ થાય તે) *</label><input type="date" id="nt-date" required class="w-full p-2 border border-gray-300 rounded"></div>
+                        <div class="grid grid-cols-2 gap-2"><div><label class="block font-bold text-gray-700 mb-1">કલાક થી</label><input id="nt-from" value="૨૩/૦૦" class="w-full p-2 border border-gray-300 rounded"></div><div><label class="block font-bold text-gray-700 mb-1">કલાક સુધી</label><input id="nt-to" value="૦૫/૦૦" class="w-full p-2 border border-gray-300 rounded"></div></div>
+                        <div><label class="block font-bold text-gray-700 mb-1">નાઇટ પેટ્રોલીંગ ઇન્ચાર્જ *</label><select id="nt-in" required class="w-full p-2 border border-gray-300 rounded"></select></div>
+                        <div><label class="block font-bold text-gray-700 mb-1">સાથે સ્ટાફ (ટિક કરો)</label><div id="nt-with" class="max-h-44 overflow-y-auto p-2 border border-gray-200 rounded bg-gray-50 space-y-1"></div></div>
+                        <div><label class="block font-bold text-gray-700 mb-1">નાઇટ પોઇન્ટ / ખાસ નોંધ</label><input id="nt-note" placeholder="દા.ત. માછલા ગામે પેટ્રોલીંગ" class="w-full p-2 border border-gray-300 rounded"></div>
+                        <button type="submit" class="w-full py-2 bg-indigo-700 hover:bg-indigo-800 text-white font-bold rounded shadow">નાઇટ રાઉન્ડ સેવ કરો</button>
+                    </form>
+                </div>
+                <div class="lg:col-span-2 bg-white rounded-xl shadow-md p-6 border border-gray-200">
+                    <div class="flex flex-wrap justify-between items-center pb-3 mb-3 border-b border-gray-200 gap-2 no-print">
+                        <h2 class="text-lg font-bold text-indigo-900">નાઇટ રાઉન્ડ પત્રક</h2>
+                        <div class="flex gap-2"><button onclick="exportToPDF('night-print-area','Hadad_Night_Round')" class="px-3 py-1.5 bg-red-600 text-white rounded-lg text-xs font-semibold"><i class="fa-solid fa-file-pdf mr-1"></i> PDF</button><button onclick="exportToImage('night-print-area','Hadad_Night_Round')" class="px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-semibold"><i class="fa-solid fa-file-image mr-1"></i> PNG</button><button onclick="window.print()" class="px-3 py-1.5 bg-gray-700 text-white rounded-lg text-xs font-semibold"><i class="fa-solid fa-print mr-1"></i> પ્રિન્ટ</button></div>
+                    </div>
+                    <div id="night-print-area" class="bg-white p-3 border border-gray-300 rounded text-xs">
+                        <h3 class="text-center font-bold text-sm mb-2">હડાદ પોલીસ સ્ટેશન - રોજનો નાઇટ રાઉન્ડ પત્રક</h3>
+                        <div class="overflow-x-auto"><table class="w-full border-collapse border border-gray-300 text-left"><thead class="bg-gray-100 font-bold"><tr><th class="border border-gray-300 p-1.5">તારીખ</th><th class="border border-gray-300 p-1.5">સમય</th><th class="border border-gray-300 p-1.5">ઇન્ચાર્જ</th><th class="border border-gray-300 p-1.5">સાથે</th><th class="border border-gray-300 p-1.5">નોંધ</th><th class="border border-gray-300 p-1.5 no-print admin-only"></th></tr></thead><tbody id="night-body"></tbody></table></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <!-- TAB 2: BANDOBAST ASSIGNMENT MODULE -->
         <section id="sec-bandobast" class="tab-section hidden">
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -270,6 +297,7 @@
                         <i class="fa-solid fa-user-plus text-purple-600 mr-2"></i> નવી પ્રતિ નિયુક્તિ ઉમેરો
                     </h3>
                     <form onsubmit="handleAddDeputation(event)" class="space-y-3 text-xs">
+<div><label class="block font-bold text-gray-700 mb-1">હાલના સ્ટાફમાંથી પસંદ કરો</label><select id="dep-pick" onchange="fillPick('dep')" class="w-full p-2 border border-gray-300 rounded"></select></div>
                         <div>
                             <label class="block font-bold text-gray-700 mb-1">હોદ્દો (Rank) *</label>
                             <select id="dep-role" required class="w-full p-2 border border-gray-300 rounded">
@@ -361,6 +389,7 @@
                         <i class="fa-solid fa-user-plus text-green-600 mr-2"></i> નવો સ્ટાફ ઉમેરો (Add Staff)
                     </h3>
                     <form onsubmit="handleAddStaff(event)" class="space-y-3 text-xs">
+<div><label class="block font-bold text-gray-700 mb-1">હાલના સ્ટાફમાંથી પસંદ કરો</label><select id="add-pick" onchange="fillPick('add')" class="w-full p-2 border border-gray-300 rounded"></select></div>
                         <div>
                             <label class="block font-bold text-gray-700 mb-1">હોદ્દો (Rank) *</label>
                             <select id="add-role" required class="w-full p-2 border border-gray-300 rounded">
@@ -460,13 +489,14 @@
                         </div>
                         <div>
                             <label class="block font-bold text-gray-700 mb-1">રજાનો પ્રકાર *</label>
-                            <select id="leave-type" required class="w-full p-2 border border-gray-300 rounded font-semibold text-gray-800">
+                            <select id="leave-type" onchange="toggleOther()" required class="w-full p-2 border border-gray-300 rounded font-semibold text-gray-800">
                                 <option value="હક્ક રજા">હક્ક રજા</option>
                                 <option value="ક.રજા (કેઝ્યુઅલ લીવ)">ક.રજા (કેઝ્યુઅલ લીવ)</option>
                                 <option value="સીકમાં (Sick Leave)">સીકમાં (Sick Leave)</option>
                                 <option value="ગેરહાજર (Absent)">ગેરહાજર (Absent)</option>
                                 <option value="અન્ય (Other)">અન્ય (Other)</option>
                             </select>
+<input type="text" id="leave-other" placeholder="અન્ય કારણ / રજાનો પ્રકાર લખો" class="hidden w-full p-2 mt-2 border border-red-300 rounded bg-red-50">
                         </div>
                         <div>
                             <label class="block font-bold text-gray-700 mb-1">કઈ તારીખથી / ક્યાં સુધી વિગત *</label>
@@ -607,7 +637,7 @@
             document.getElementById('sec-' + tabName).classList.remove('hidden');
 
             // Toggle active styling on tabs
-            ['roster', 'perm', 'bandobast', 'deputation', 'available', 'leaves'].forEach(t => {
+            ['roster', 'perm', 'bandobast', 'night', 'deputation', 'available', 'leaves'].forEach(t => {
                 const btn = document.getElementById('tab-' + t);
                 if (t === tabName) {
                     btn.classList.add("active");
@@ -619,6 +649,7 @@
 
         // INITIALIZE APP DATA & UI
         function initApp() {
+            populatePicks(); renderNight();
             renderPerm();
             saveAll(); renderRoster();
             updateStats();
@@ -838,7 +869,8 @@
         function handleMarkLeave(e) {
             e.preventDefault();
             const staffId = parseInt(document.getElementById('leave-staff-id').value);
-            const leaveType = document.getElementById('leave-type').value;
+            let leaveType = document.getElementById('leave-type').value;
+            if (leaveType.startsWith('અન્ય')) { const o = document.getElementById('leave-other').value.trim(); if (o) leaveType = o; }
             const details = document.getElementById('leave-details').value;
 
             const st = staffMaster.find(s => s.id === staffId);
@@ -1053,9 +1085,10 @@
 // ===== તારીખ મુજબ નોકરી પત્રક / થીમ / બેકઅપ =====
 const DATA_KEY='hadad_data_v1';
 let isAdmin=sessionStorage.getItem('hadad_admin')==='1';
+let nightRounds=[];
 let rosters={"2026-10-22": {"from": "2026-10-22", "to": "2026-10-23", "officer": "શ્રી I/C PI જે.જે. સરવૈયા સાહેબ", "duties": [{"duty": "પોસ્ટેઓ (PSO)", "shift": "૦૦/૦૦ થી ૦૮/૦૦", "staff": "UASI નિયાઝખાન બબલમિયા (બ.નં.૧૦૩૮)", "remark": "૭૫૮૮૫૮૩૪૮૨"}, {"duty": "પોસ્ટેઓ (PSO)", "shift": "૦૮/૦૦ થી ૨૪/૦૦", "staff": "UHC બાબુભાઇ મંછાભાઇ (બ.નં.૧૩૫૬)", "remark": "૯૬૨૪૪૭૮૭૬૮"}, {"duty": "વી.એચ.એફ (VHF)", "shift": "૦૦/૦૦ થી ૦૮/૦૦", "staff": "UASI નિયાઝખાન બબલમિયા (બ.નં.૧૦૩૮)", "remark": ""}, {"duty": "વી.એચ.એફ (VHF)", "shift": "૦૮/૦૦ થી ૨૪/૦૦", "staff": "UHC બાબુભાઇ મંછાભાઇ (બ.નં.૧૩૫૬)", "remark": ""}, {"duty": "કોમ્પ્યુટર ઓપરેટર", "shift": "૦૦/૦૦ થી ૦૮/૦૦ & ૨૦/૦૦ થી ૨૪/૦૦", "staff": "UPC જયેશકુમાર ચંન્દ્રકાંન્તભાઇ (બ.નં.૧૫૪૮)", "remark": "૭૬૨૨૮૫૨૦૨૩ (ઇ-ગુજકોપ/પોકેટ કોપ)"}, {"duty": "કોમ્પ્યુટર ઓપરેટર", "shift": "૦૮/૦૦ થી ૨૦/૦૦", "staff": "WUHC લીલાબેન ભોળાભાઇ (બ.નં.૨૩૧૮)", "remark": "૯૬૩૮૦૮૦૪૨૭ (ચાર્જ રા.હેડ)"}, {"duty": "ડ્રાઇવર ડ્યુટી", "shift": "૦૦/૦૦ થી ૦૮/૦૦", "staff": "D.APC કમલેશજી હરસનજી (બ.નં.૩૯૭)", "remark": "૯૯૭૯૦૧૩૬૮૯"}, {"duty": "ડ્રાઇવર ડ્યુટી", "shift": "૦૮/૦૦ થી ૨૪/૦૦", "staff": "D.APC મનહરસિંહ ભમરસિંહ (બ.નં.૭૨૬)", "remark": "૯૭૨૪૮૫૬૯૨૬"}], "keys": [{"label": "રાઇટર હેડ કોન્સ.", "staff": "WUHC લીલાબેન ભોળાભાઇ (બ.નં.૨૩૧૮)"}, {"label": "ક્રાઇમ શાખા", "staff": "WUASI સુમિત્રાબેન કમજીભાઇ (બ.નં.૧૦૩૫)"}, {"label": "બારનીશી / શી-ટીમ", "staff": "WUASI મંજુલાબેન નાથાભાઇ (બ.નં.૧૩૭૦)"}, {"label": "કોર્ટ ડ્યુટી (દાંતા)", "staff": "UPC વિપુલભાઇ સરદારભાઇ (બ.નં.૪૮૯)"}, {"label": "ટ્રાફિક ડ્યુટી", "staff": "UHC ઇશ્વરભાઇ ગોકળભાઇ (૧૭૧૨), APC બ્રિજેશકુમાર (૬૫૦)"}, {"label": "બીટ નં.૦૧ ચાર્જ", "staff": "UASI લલીતભાઇ જીવણભાઇ (બ.નં.૧૫૯૯)"}, {"label": "બીટ નં.૦૨ ચાર્જ", "staff": "ASI ધવલભાઇ ઉજમાભાઇ (બ.નં.૨૧૭૦)"}, {"label": "મંડાલી ઓ.પી. ચાર્જ", "staff": "UASI બાબુભાઇ મણીલાલ (બ.નં.૧૦૩૨)"}, {"label": "કુંવારસી ઓ.પી. ચાર્જ", "staff": "UHC મનુભાઇ લતાભાઇ (બ.નં.૧૬૫૯)"}], "vanTitle": "૧૧૨ જન રક્ષક વાન (બોલેરો ગાડી નં. GJ-18 BX-0114) - ૧૨ કલાક શીફ્ટ", "van": [{"label": "શીફ્ટ-૦૧", "staff": "AHC અંબારામ સવજીભાઇ (૩૫૯), APC બીપીનભાઇ ચંદુભાઇ (૩૨૮)"}, {"label": "શીફ્ટ-૦૨", "staff": "AHC બાબુભાઇ લેબાભાઇ (૫૮૦), UPC દિપકભાઇ પાંચાભાઇ (૧૭૦૩)"}, {"label": "૧૧૨ ડ્રાઇવર", "staff": "(૧) હિતેશકુમાર જગદીશભાઇ દાવડા (ઘુંઘરમાળ) ૯૮૭૯૪૫૪૦૬૧, (૨) અમરતભાઇ કચરાભાઇ કોદરવી (કુવારસી) ૭૦૧૬૯૬૯૬૨૦, (૩) રણજીતજી માધુજી પરમાર (જસ્વાપુર) ૯૩૨૭૧૮૭૧૪૫"}, {"label": "નોંધ", "staff": "તમામે ૧૨ કલાકની શીફ્ટ મુજબ ફરજ બજાવવાની રહેશે"}], "nIn": "ASI ધવલભાઇ ઉજમાભાઇ (૨૧૭૦) સાથે UHC મનુભાઇ લતાભાઇ (૧૬૫૯)", "nPts": "હડાદ બસ સ્ટેન્ડ, પોસીના ચાર રસ્તા, મંગલમ પેટ્રોલ પંપ, ઇન્દિરા ચોક, બરોડા બેન્ક, સોની બજાર, ભાણપુર, મંડાલી, બામોદ્રા, કુંવારસી.", "nNote": "નાઇટ પેટ્રોલીંગ ઇન્ચાર્જશ્રીએ માછલા ગામે પેટ્રોલીંગ કરી ખેરીયત મેળવવી."}}, curDate='', draft=null, editKey=null;
-(function(){if(!isAdmin)return;try{const d=JSON.parse(localStorage.getItem(DATA_KEY));if(d){if(d.rosters)rosters=d.rosters;if(d.staffMaster)staffMaster=d.staffMaster;if(d.bandobastOrders)bandobastOrders=d.bandobastOrders;}}catch(e){}})();
-function saveAll(){if(!isAdmin)return;try{localStorage.setItem(DATA_KEY,JSON.stringify({rosters,staffMaster,bandobastOrders}))}catch(e){}}
+(function(){if(!isAdmin)return;try{const d=JSON.parse(localStorage.getItem(DATA_KEY));if(d){if(d.rosters)rosters=d.rosters;if(d.staffMaster)staffMaster=d.staffMaster;if(d.bandobastOrders)bandobastOrders=d.bandobastOrders;if(d.nightRounds)nightRounds=d.nightRounds;}}catch(e){}})();
+function saveAll(){if(!isAdmin)return;try{localStorage.setItem(DATA_KEY,JSON.stringify({rosters,staffMaster,bandobastOrders,nightRounds}))}catch(e){}}
 const G=s=>String(s).replace(/\d/g,d=>'૦૧૨૩૪૫૬૭૮૯'[d]);
 const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const fd=d=>{const p=d.split('-');return G(p[2]+'/'+p[1]+'/'+p[0])};
@@ -1127,8 +1160,8 @@ function saveRoster(){syncDraft();if(!draft.from){alert('તારીખ પસ�
 function deleteRoster(){const k=findKey(curDate);if(k&&confirm(fd(k)+' નું પત્રક કાઢી નાખવું છે?')){delete rosters[k];saveAll();renderRoster()}}
 
 // ----- બેકઅપ -----
-function exportData(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify({rosters,staffMaster,bandobastOrders},null,1)],{type:'application/json'}));a.download='data.json';a.click()}
-function importData(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(d.rosters)rosters=d.rosters;if(d.staffMaster)staffMaster=d.staffMaster;if(d.bandobastOrders)bandobastOrders=d.bandobastOrders;saveAll();initApp();alert('બેકઅપ લોડ થયું')}catch(e){alert('ફાઇલ માન્ય નથી')}};r.readAsText(f)}
+function exportData(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify({rosters,staffMaster,bandobastOrders,nightRounds},null,1)],{type:'application/json'}));a.download='data.json';a.click()}
+function importData(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(d.rosters)rosters=d.rosters;if(d.staffMaster)staffMaster=d.staffMaster;if(d.bandobastOrders)bandobastOrders=d.bandobastOrders;if(d.nightRounds)nightRounds=d.nightRounds;saveAll();initApp();alert('બેકઅપ લોડ થયું')}catch(e){alert('ફાઇલ માન્ય નથી')}};r.readAsText(f)}
 
 // ----- સ્થાયી પત્રક / સ્ટાફ ફેરફાર -----
 const GRPMAP={"-": "થાણાઅધિકારી", "1038": "પી.એસ.ઓ./ વાયરલેસ", "1356": "પી.એસ.ઓ./ વાયરલેસ", "1548": "કોમ્પ્યુટર ઓપરેટર ઇ-ગુજકોપ", "2318": "કોમ્પ્યુટર ઓપરેટર ઇ-ગુજકોપ", "1176": "એકાઉન્ટ રા.હેડ", "1035": "ક્રાઇમ", "1632": "એલ.આઇ.બી", "1370": "બારનીશી", "1138": "ટપાલ ડ્યુટી", "489": "કોર્ટ-ડ્યુટી", "1659": "કુવારસી ઓ.પી.", "1841": "કુવારસી ઓ.પી.", "1032": "મંડાલી ઓ.પી", "687": "મંડાલી ઓ.પી", "1599": "બીટ-૧", "2041": "બીટ-૧", "2170": "બીટ-૨", "279": "બીટ-૨", "1270": "પર્સનલ", "2248": "પર્સનલ", "1669": "પર્સનલ", "1712": "ટ્રાફીક", "650": "ટ્રાફીક", "2364": "ટ્રાફીક", "1703": "ટ્રાફીક", "1299": "ટ્રાફીક", "397": "ડ્રાઇવર", "726": "ડ્રાઇવર", "580": "૧૧૨ જન રક્ષક", "359": "૧૧૨ જન રક્ષક", "1615": "૧૧૨ જન રક્ષક", "1995": "૧૧૨ જન રક્ષક", "1025": "પ્રતિનિયુક્તિ", "428": "પ્રતિનિયુક્તિ"};
@@ -1172,10 +1205,40 @@ function adminToggle(){if(isAdmin){sessionStorage.removeItem('hadad_admin');loca
   const p=prompt('એડમિન PIN નાખો:');if(p===null)return;if(p===(localStorage.getItem('hadad_pin')||'1234')){sessionStorage.setItem('hadad_admin','1');location.reload()}else alert('PIN ખોટો છે')}
 function changePin(){const p=prompt('નવો PIN (ઓછામાં ઓછા ૪ આંકડા):');if(p&&p.length>=4){localStorage.setItem('hadad_pin',p);alert('PIN બદલાયો')}}
 document.getElementById('theme-box').innerHTML=(isAdmin?'<button onclick="changePin()" class="px-2 py-1 rounded-lg text-xs bg-white/20 text-white">PIN બદલો</button>':'')+`<button onclick="adminToggle()" class="px-3 py-1.5 rounded-lg text-xs font-semibold ${isAdmin?'bg-yellow-400 text-gray-900':'bg-white/20 text-white'}"><i class="fa-solid ${isAdmin?'fa-lock-open':'fa-lock'} mr-1"></i> ${isAdmin?'એડમિન (લોગઆઉટ)':'એડમિન લોગિન'}</button>`;
-if(!isAdmin)fetch('data.json?'+Date.now()).then(r=>r.ok?r.json():null).then(d=>{if(!d)return;if(d.rosters)rosters=d.rosters;if(d.staffMaster)staffMaster=d.staffMaster;if(d.bandobastOrders)bandobastOrders=d.bandobastOrders;
+if(!isAdmin)fetch('data.json?'+Date.now()).then(r=>r.ok?r.json():null).then(d=>{if(!d)return;if(d.rosters)rosters=d.rosters;if(d.staffMaster)staffMaster=d.staffMaster;if(d.bandobastOrders)bandobastOrders=d.bandobastOrders;if(d.nightRounds)nightRounds=d.nightRounds;
   const n=new Date(),td=n.getFullYear()+'-'+pad(n.getMonth()+1)+'-'+pad(n.getDate());curDate=findKey(td)?td:(keysDesc()[0]||td);initApp()}).catch(()=>{});
+// ----- પીકર / અન્ય રજા / નાઇટ રાઉન્ડ -----
+const sLabel=s=>`${s.role} ${s.name} (બ.નં.${G(s.buckNo)})`;
+function populatePicks(){
+  const S=sortStaffByRank(staffMaster);
+  ['add','dep'].forEach(p=>{const e=document.getElementById(p+'-pick');if(!e)return;const v=e.value;e.innerHTML='<option value="">— નવો સ્ટાફ (હાથે લખો) —</option>'+S.map(s=>`<option value="${s.id}">${esc(sLabel(s))}</option>`).join('');e.value=v});
+  const A=S.filter(s=>s.status!=='LEAVE'&&s.status!=='DEPUTATION'),ni=document.getElementById('nt-in');
+  if(ni){const v=ni.value;ni.innerHTML='<option value="">— પસંદ કરો —</option>'+A.map(s=>`<option value="${s.id}">${esc(sLabel(s))}</option>`).join('');ni.value=v}
+  const nw=document.getElementById('nt-with');
+  if(nw){const ck=[...nw.querySelectorAll('input:checked')].map(x=>x.value);nw.innerHTML=A.map(s=>`<label class="flex items-center gap-2"><input type="checkbox" value="${s.id}" ${ck.includes(String(s.id))?'checked':''}> ${esc(sLabel(s))}</label>`).join('')}
+}
+function fillPick(p){const s=staffMaster.find(x=>x.id===+document.getElementById(p+'-pick').value);if(!s)return;
+  document.getElementById(p+'-role').value=s.role;document.getElementById(p+'-buck').value=s.buckNo;document.getElementById(p+'-name').value=s.name;document.getElementById(p+'-phone').value=s.phone;
+  if(p==='add')document.getElementById('add-duty').value=s.regularDuty||''}
+const _hAS=handleAddStaff;handleAddStaff=function(e){const id=+document.getElementById('add-pick').value;if(!id)return _hAS(e);e.preventDefault();
+  const s=staffMaster.find(x=>x.id===id);s.role=document.getElementById('add-role').value;s.buckNo=document.getElementById('add-buck').value;s.name=document.getElementById('add-name').value;s.phone=document.getElementById('add-phone').value;s.regularDuty=document.getElementById('add-duty').value||s.regularDuty;s.status='AVAILABLE';delete s.leaveDetails;delete s.deputationDetails;
+  e.target.reset();initApp();alert(sLabel(s)+' ને બચતમાં રાખ્યા છે.')};
+const _hAD=handleAddDeputation;handleAddDeputation=function(e){const id=+document.getElementById('dep-pick').value;if(!id)return _hAD(e);e.preventDefault();
+  const s=staffMaster.find(x=>x.id===id);s.role=document.getElementById('dep-role').value;s.buckNo=document.getElementById('dep-buck').value;s.name=document.getElementById('dep-name').value;s.phone=document.getElementById('dep-phone').value;s.status='DEPUTATION';s.deputationDetails=document.getElementById('dep-details').value;delete s.leaveDetails;
+  bandobastOrders.forEach(b=>{b.assignedStaffIds=b.assignedStaffIds.filter(x=>x!==id)});
+  e.target.reset();initApp();alert(sLabel(s)+' ને પ્રતિ નિયુક્તિમાં મૂક્યા છે.')};
+function toggleOther(){const o=document.getElementById('leave-type').value.startsWith('અન્ય'),e=document.getElementById('leave-other');e.classList.toggle('hidden',!o);e.required=o;if(!o)e.value=''}
+function handleNight(e){e.preventDefault();const g=i=>document.getElementById(i).value,inc=staffMaster.find(s=>s.id===+g('nt-in'));if(!inc)return;
+  const w=[...document.querySelectorAll('#nt-with input:checked')].map(x=>staffMaster.find(s=>s.id===+x.value)).filter(s=>s&&s.id!==inc.id);
+  nightRounds=nightRounds.filter(n=>n.date!==g('nt-date'));
+  nightRounds.push({id:Date.now(),date:g('nt-date'),from:g('nt-from'),to:g('nt-to'),incharge:sLabel(inc),with:sortStaffByRank(w).map(sLabel).join(', '),note:g('nt-note')});
+  e.target.reset();document.getElementById('nt-from').value='૨૩/૦૦';document.getElementById('nt-to').value='૦૫/૦૦';initApp()}
+function delNight(id){if(confirm('આ નાઇટ રાઉન્ડ કાઢી નાખવો છે?')){nightRounds=nightRounds.filter(n=>n.id!==id);initApp()}}
+function renderNight(){const b=document.getElementById('night-body');if(!b)return;const td='border border-gray-300 p-1.5';
+  b.innerHTML=[...nightRounds].sort((x,y)=>y.date.localeCompare(x.date)).map(n=>`<tr><td class="${td} font-semibold">${fd(n.date)}<br><span class="text-gray-500">${wdOf(n.date)}</span></td><td class="${td}">${esc(n.from)} થી ${esc(n.to)}</td><td class="${td} font-bold">${esc(n.incharge)}</td><td class="${td}">${esc(n.with)||'-'}</td><td class="${td}">${esc(n.note)||'-'}</td><td class="${td} no-print admin-only"><button onclick="delNight(${n.id})" class="text-red-600"><i class="fa-solid fa-trash"></i></button></td></tr>`).join('')||`<tr><td colspan="6" class="${td} text-center text-gray-500 p-4">હજી કોઈ નાઇટ રાઉન્ડ નોંધાયો નથી.</td></tr>`;
+  const d=document.getElementById('nt-date');if(d&&!d.value){const n=new Date();d.value=n.getFullYear()+'-'+pad(n.getMonth()+1)+'-'+pad(n.getDate())}}
 // ----- દરેક મેનુનો અલગ રંગ -----
-const TAB_HUE={"roster": 215, "perm": 190, "bandobast": 28, "deputation": 275, "available": 145, "leaves": 350},LV={50:96,100:92,200:84,300:72,400:60,500:50,600:43,700:36,800:29,900:22};
+const TAB_HUE={"night":322,"roster": 215, "perm": 190, "bandobast": 28, "deputation": 275, "available": 145, "leaves": 350},LV={50:96,100:92,200:84,300:72,400:60,500:50,600:43,700:36,800:29,900:22};
 function setHue(h){for(const k in LV)document.documentElement.style.setProperty('--c-'+k,`${h} 70% ${LV[k]}%`)}
 const _sw=switchTab;switchTab=function(n){_sw(n);setHue(TAB_HUE[n]||215)};
 switchTab('roster');
